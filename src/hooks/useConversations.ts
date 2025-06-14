@@ -19,7 +19,7 @@ export const useConversations = () => {
           *,
           participant_1_profile:profiles!conversations_participant_1_fkey(id, username, full_name, avatar_url),
           participant_2_profile:profiles!conversations_participant_2_fkey(id, username, full_name, avatar_url),
-          messages!inner(
+          messages(
             id,
             content,
             created_at,
@@ -31,22 +31,7 @@ export const useConversations = () => {
         .order('updated_at', { ascending: false });
 
       if (error) throw error;
-      
-      // Remove duplicates based on participants (normalize order)
-      const uniqueConversations = [];
-      const seenPairs = new Set();
-      
-      for (const conv of data || []) {
-        const participants = [conv.participant_1, conv.participant_2].sort();
-        const pairKey = participants.join('-');
-        
-        if (!seenPairs.has(pairKey)) {
-          seenPairs.add(pairKey);
-          uniqueConversations.push(conv);
-        }
-      }
-      
-      return uniqueConversations;
+      return data || [];
     },
     enabled: !!user,
   });
@@ -60,7 +45,7 @@ export const useConversations = () => {
         .from('conversations')
         .select('id')
         .or(`and(participant_1.eq.${user.id},participant_2.eq.${participantId}),and(participant_1.eq.${participantId},participant_2.eq.${user.id})`)
-        .single();
+        .maybeSingle();
 
       if (existing) {
         return existing.id;

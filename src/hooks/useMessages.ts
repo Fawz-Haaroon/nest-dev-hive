@@ -17,8 +17,7 @@ export const useMessages = (conversationId: string | null) => {
         .from('messages')
         .select(`
           *,
-          sender:profiles!messages_sender_id_fkey(id, username, full_name, avatar_url),
-          reply_to_message:messages!messages_reply_to_fkey(id, content, sender_id)
+          sender:profiles!messages_sender_id_fkey(id, username, full_name, avatar_url)
         `)
         .eq('conversation_id', conversationId)
         .order('created_at', { ascending: true });
@@ -68,12 +67,10 @@ export const useMessages = (conversationId: string | null) => {
       if (!user) throw new Error('Not authenticated');
       
       const { error } = await supabase
-        .from('message_status')
-        .upsert({
-          message_id: messageId,
-          user_id: user.id,
-          status: 'read'
-        });
+        .from('messages')
+        .update({ read: true })
+        .eq('id', messageId)
+        .neq('sender_id', user.id);
 
       if (error) throw error;
     },
