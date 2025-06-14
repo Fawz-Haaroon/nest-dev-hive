@@ -7,7 +7,7 @@ export interface ProjectNew {
   id: string;
   title: string;
   description: string;
-  long_description?: string;
+  detailed_description?: string;
   owner_id: string;
   status: 'open' | 'in-progress' | 'completed' | 'closed';
   difficulty: 'beginner' | 'intermediate' | 'advanced' | 'expert';
@@ -36,26 +36,7 @@ export const useProjectsNew = (filters?: {
     queryFn: async () => {
       let query = supabase
         .from('projects')
-        .select(`
-          id,
-          title,
-          description,
-          long_description,
-          owner_id,
-          status,
-          difficulty,
-          tags,
-          tech_stack,
-          category,
-          github_url,
-          live_url,
-          image_url,
-          max_members,
-          current_members,
-          featured,
-          created_at,
-          updated_at
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (filters?.category) {
@@ -86,15 +67,15 @@ export const useProjectsNew = (filters?: {
         id: project.id,
         title: project.title,
         description: project.description,
-        long_description: project.long_description,
+        detailed_description: project.detailed_description,
         owner_id: project.owner_id,
         status: project.status as 'open' | 'in-progress' | 'completed' | 'closed',
         difficulty: project.difficulty as 'beginner' | 'intermediate' | 'advanced' | 'expert',
         tags: project.tags || [],
         tech_stack: project.tech_stack || [],
         category: project.category,
-        github_url: project.github_url,
-        live_url: project.live_url,
+        github_url: project.repository_url,
+        live_url: project.live_demo_url,
         image_url: project.image_url,
         max_members: project.max_members || 5,
         current_members: project.current_members || 1,
@@ -118,7 +99,19 @@ export const useCreateProjectNew = () => {
       const { data, error } = await supabase
         .from('projects')
         .insert([{ 
-          ...projectData,
+          title: projectData.title,
+          description: projectData.description,
+          detailed_description: projectData.detailed_description,
+          status: projectData.status,
+          difficulty: projectData.difficulty,
+          tags: projectData.tags,
+          tech_stack: projectData.tech_stack,
+          category: projectData.category,
+          repository_url: projectData.github_url,
+          live_demo_url: projectData.live_url,
+          image_url: projectData.image_url,
+          max_members: projectData.max_members,
+          featured: projectData.featured,
           owner_id: user.id 
         }])
         .select()
