@@ -180,7 +180,7 @@ export const EnhancedSearchBar = ({ onSelectProject, className = "" }: EnhancedS
                               ))}
                               <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
                                 <Star className="w-3 h-3" />
-                                {project.upvotes || 0}
+                                <span>0</span>
                               </div>
                             </div>
                           </div>
