@@ -33,24 +33,26 @@ export const UserDropdown = () => {
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-56 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg backdrop-blur-sm" align="end">
-        <div className="flex items-center gap-3 p-3 border-b border-slate-100 dark:border-slate-700">
-          <Avatar className="h-10 w-10 border-2 border-blue-200 dark:border-blue-800">
+      <DropdownMenuContent className="w-72 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg backdrop-blur-sm" align="end">
+        <div className="flex items-center gap-3 p-4 border-b border-slate-100 dark:border-slate-700">
+          <Avatar className="h-12 w-12 border-2 border-blue-200 dark:border-blue-800">
             <AvatarImage src={profile?.avatar_url || "/placeholder.svg"} alt="Profile" />
             <AvatarFallback className="bg-gradient-to-r from-blue-500 to-purple-500 text-white font-medium">
               {initials}
             </AvatarFallback>
           </Avatar>
-          <div className="flex flex-col">
-            <span className="text-sm font-medium text-slate-900 dark:text-slate-100">
+          <div className="flex flex-col flex-1 min-w-0">
+            <span className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">
               {profile?.full_name || profile?.username || 'User'}
             </span>
-            <span className="text-xs text-slate-500 dark:text-slate-400">{user?.email}</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400 truncate">
+              {user?.email}
+            </span>
           </div>
         </div>
         
         <DropdownMenuItem 
-          className="flex items-center gap-3 p-3 hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer transition-colors"
+          className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer transition-colors"
           onClick={() => navigate('/profile')}
         >
           <User className="w-4 h-4 text-slate-500 dark:text-slate-400" />
@@ -58,7 +60,7 @@ export const UserDropdown = () => {
         </DropdownMenuItem>
         
         <DropdownMenuItem 
-          className="flex items-center gap-3 p-3 hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer transition-colors"
+          className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer transition-colors"
           onClick={() => navigate('/my-projects')}
         >
           <FolderOpen className="w-4 h-4 text-slate-500 dark:text-slate-400" />
@@ -66,7 +68,7 @@ export const UserDropdown = () => {
         </DropdownMenuItem>
 
         <DropdownMenuItem 
-          className="flex items-center gap-3 p-3 hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer transition-colors"
+          className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer transition-colors"
           onClick={() => navigate('/favorites')}
         >
           <Heart className="w-4 h-4 text-slate-500 dark:text-slate-400" />
@@ -74,7 +76,7 @@ export const UserDropdown = () => {
         </DropdownMenuItem>
         
         <Link to="/create-project">
-          <DropdownMenuItem className="flex items-center gap-3 p-3 hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer transition-colors">
+          <DropdownMenuItem className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer transition-colors">
             <Plus className="w-4 h-4 text-slate-500 dark:text-slate-400" />
             <span className="text-sm text-slate-700 dark:text-slate-300">New Project</span>
           </DropdownMenuItem>
@@ -83,7 +85,7 @@ export const UserDropdown = () => {
         <DropdownMenuSeparator className="my-1 bg-slate-100 dark:bg-slate-700" />
         
         <DropdownMenuItem 
-          className="flex items-center gap-3 p-3 hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer transition-colors"
+          className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer transition-colors"
           onClick={() => navigate('/settings')}
         >
           <Settings className="w-4 h-4 text-slate-500 dark:text-slate-400" />
@@ -91,7 +93,7 @@ export const UserDropdown = () => {
         </DropdownMenuItem>
         
         <DropdownMenuItem 
-          className="flex items-center gap-3 p-3 hover:bg-red-50 dark:hover:bg-red-950/20 cursor-pointer transition-colors"
+          className="flex items-center gap-3 px-4 py-3 hover:bg-red-50 dark:hover:bg-red-950/20 cursor-pointer transition-colors"
           onClick={handleLogout}
         >
           <LogOut className="w-4 h-4 text-red-500" />

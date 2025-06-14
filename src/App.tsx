@@ -11,6 +11,11 @@ import Auth from "./pages/Auth";
 import CreateProject from "./pages/CreateProject";
 import ProfileSetup from "./pages/ProfileSetup";
 import Favorites from "./pages/Favorites";
+import Messages from "./pages/Messages";
+import Profile from "./pages/Profile";
+import MyProjects from "./pages/MyProjects";
+import Settings from "./pages/Settings";
+import Explore from "./pages/Explore";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -29,6 +34,11 @@ const App = () => (
               <Route path="/create-project" element={<CreateProject />} />
               <Route path="/profile-setup" element={<ProfileSetup />} />
               <Route path="/favorites" element={<Favorites />} />
+              <Route path="/messages" element={<Messages />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/my-projects" element={<MyProjects />} />
+              <Route path="/settings" element={<Settings />} />
+              <Route path="/explore" element={<Explore />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
