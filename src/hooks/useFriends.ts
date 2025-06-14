@@ -36,7 +36,11 @@ export const useFriends = () => {
       
       const { data, error } = await supabase
         .from('friends')
-        .select('*')
+        .select(`
+          *,
+          friend_profile:profiles!friends_friend_id_fkey(id, username, full_name, avatar_url),
+          user_profile:profiles!friends_user_id_fkey(id, username, full_name, avatar_url)
+        `)
         .or(`user_id.eq.${user.id},friend_id.eq.${user.id}`);
 
       if (error) throw error;
