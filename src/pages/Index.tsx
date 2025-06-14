@@ -1,7 +1,7 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Navbar } from '@/components/Navbar';
-import { ProjectCard } from '@/components/ProjectCard';
 import { EnhancedSearchBar } from '@/components/EnhancedSearchBar';
 import { ExploreProjectsSection } from '@/components/ExploreProjectsSection';
 import { Button } from '@/components/ui/button';
@@ -120,48 +120,6 @@ const Index = () => {
               <p className="text-lg text-slate-600 dark:text-slate-400 font-medium">Completed</p>
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* Featured Projects - Better Grid */}
-      <section id="featured-projects" className="py-20">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <div className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-100/80 to-purple-100/80 dark:from-blue-900/30 dark:to-purple-900/30 text-blue-700 dark:text-blue-400 px-4 py-2 rounded-full text-sm font-semibold mb-6 border border-blue-200/50 dark:border-blue-800/50 backdrop-blur-sm">
-              <Sparkles className="w-4 h-4" />
-              <span>Featured Projects</span>
-            </div>
-            <h2 className="text-4xl md:text-5xl font-bold text-slate-900 dark:text-slate-100 mb-6">
-              Trending Projects
-            </h2>
-            <p className="text-xl text-slate-600 dark:text-slate-400 max-w-3xl mx-auto leading-relaxed">
-              Discover exciting projects looking for collaborators. Join a team and start building something amazing.
-            </p>
-          </div>
-
-          {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 max-w-7xl mx-auto">
-              {[...Array(6)].map((_, i) => (
-                <div key={i} className="bg-white/80 dark:bg-slate-900/80 rounded-3xl border border-slate-200/60 dark:border-slate-700/60 p-6 animate-pulse">
-                  <div className="aspect-[16/10] bg-slate-200 dark:bg-slate-700 rounded-2xl mb-6"></div>
-                  <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded mb-4"></div>
-                  <div className="h-6 bg-slate-200 dark:bg-slate-700 rounded mb-4"></div>
-                  <div className="h-16 bg-slate-200 dark:bg-slate-700 rounded mb-6"></div>
-                  <div className="flex gap-2 mb-6">
-                    <div className="h-6 w-20 bg-slate-200 dark:bg-slate-700 rounded"></div>
-                    <div className="h-6 w-24 bg-slate-200 dark:bg-slate-700 rounded"></div>
-                  </div>
-                  <div className="h-12 bg-slate-200 dark:bg-slate-700 rounded"></div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 max-w-7xl mx-auto">
-              {projects.slice(0, 6).map((project) => (
-                <ProjectCard key={project.id} project={project} />
-              ))}
-            </div>
-          )}
         </div>
       </section>
 
