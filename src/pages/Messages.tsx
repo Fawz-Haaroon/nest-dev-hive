@@ -119,9 +119,15 @@ export default function Messages() {
 
   const handleStartConversation = async (friendId: string) => {
     try {
+      console.log('Starting conversation with friend:', friendId);
       const conversationId = await createConversation.mutateAsync(friendId);
+      console.log('Conversation created/found:', conversationId);
       setSelectedConversation(conversationId);
       setShowMobileView(true);
+      toast({
+        title: "Success",
+        description: "Conversation started successfully!",
+      });
     } catch (error) {
       console.error('Failed to create conversation:', error);
       toast({
@@ -654,7 +660,7 @@ export default function Messages() {
                 </div>
               </>
             ) : (
-              <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-slate-900/20 to-slate-800/20">
+              <div className="flex-1 flex items-center justify-center">
                 <div className="text-center">
                   <MessageCircle className="w-20 h-20 mx-auto mb-6 text-cyan-400" />
                   <h3 className="text-xl font-semibold text-white mb-2">
