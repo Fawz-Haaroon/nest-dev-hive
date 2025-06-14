@@ -13,6 +13,7 @@ import ProfileSetup from "./pages/ProfileSetup";
 import Favorites from "./pages/Favorites";
 import Messages from "./pages/Messages";
 import Profile from "./pages/Profile";
+import UserProfile from "./pages/UserProfile";
 import MyProjects from "./pages/MyProjects";
 import Settings from "./pages/Settings";
 import Explore from "./pages/Explore";
@@ -36,6 +37,7 @@ const App = () => (
               <Route path="/favorites" element={<Favorites />} />
               <Route path="/messages" element={<Messages />} />
               <Route path="/profile" element={<Profile />} />
+              <Route path="/profile/:userId" element={<UserProfile />} />
               <Route path="/my-projects" element={<MyProjects />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="/explore" element={<Explore />} />

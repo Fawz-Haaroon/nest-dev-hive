@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Search, Send, MoreVertical, Phone, Video, Info, Paperclip, Smile, MessageCircle, UserPlus, Users, Check, X, ArrowLeft, Image, FileText } from 'lucide-react';
+import { Search, Send, MoreVertical, Phone, Video, Info, Paperclip, Smile, MessageCircle, UserPlus, Users, Check, X, ArrowLeft, Trash2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useConversations } from '@/hooks/useConversations';
 import { useMessages } from '@/hooks/useMessages';
@@ -14,10 +14,20 @@ import { FriendRequestModal } from '@/components/FriendRequestModal';
 import { format } from 'date-fns';
 import { Navbar } from '@/components/Navbar';
 import { useNavigate } from 'react-router-dom';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/hooks/use-toast';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 export default function Messages() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
   const [newMessage, setNewMessage] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
@@ -34,27 +44,53 @@ export default function Messages() {
 
   const selectedConversationData = conversations.find(c => c.id === selectedConversation);
 
-  // Enhanced search functionality - search through both conversations and friends
+  const deleteConversation = useMutation({
+    mutationFn: async (conversationId: string) => {
+      const { error } = await supabase
+        .from('conversations')
+        .delete()
+        .eq('id', conversationId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['conversations'] });
+      setSelectedConversation(null);
+      setShowMobileView(false);
+      toast({
+        title: "Conversation deleted",
+        description: "The conversation has been deleted successfully.",
+      });
+    },
+  });
+
+  // Enhanced search functionality
   const filteredConversations = conversations.filter(conversation => {
+    if (!searchTerm) return true;
+    
     const otherParticipant = conversation.participant_1 === user?.id 
       ? conversation.participant_2_profile 
       : conversation.participant_1_profile;
     
     if (!otherParticipant) return false;
     
+    const searchLower = searchTerm.toLowerCase();
     return (
-      otherParticipant.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      otherParticipant.username.toLowerCase().includes(searchTerm.toLowerCase())
+      otherParticipant.full_name?.toLowerCase().includes(searchLower) ||
+      otherParticipant.username.toLowerCase().includes(searchLower)
     );
   });
 
   const filteredFriends = friends.filter(friend => {
+    if (!searchTerm) return true;
+    
     const friendProfile = friend.user_id === user?.id ? friend.friend_profile : friend.user_profile;
     if (!friendProfile) return false;
     
+    const searchLower = searchTerm.toLowerCase();
     return (
-      friendProfile.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      friendProfile.username.toLowerCase().includes(searchTerm.toLowerCase())
+      friendProfile.full_name?.toLowerCase().includes(searchLower) ||
+      friendProfile.username.toLowerCase().includes(searchLower)
     );
   });
 
@@ -65,6 +101,11 @@ export default function Messages() {
         setNewMessage('');
       } catch (error) {
         console.error('Failed to send message:', error);
+        toast({
+          title: "Error",
+          description: "Failed to send message. Please try again.",
+          variant: "destructive",
+        });
       }
     }
   };
@@ -83,24 +124,46 @@ export default function Messages() {
       setShowMobileView(true);
     } catch (error) {
       console.error('Failed to create conversation:', error);
+      toast({
+        title: "Error",
+        description: "Failed to start conversation. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
   const handleCall = async (type: 'voice' | 'video') => {
     if (selectedConversation) {
-      await initiateCall.mutateAsync({
-        conversationId: selectedConversation,
-        callType: type
-      });
+      try {
+        await initiateCall.mutateAsync({
+          conversationId: selectedConversation,
+          callType: type
+        });
+      } catch (error) {
+        console.error('Failed to initiate call:', error);
+        toast({
+          title: "Error",
+          description: "Failed to start call. Please try again.",
+          variant: "destructive",
+        });
+      }
     }
   };
 
   const handleAcceptFriendRequest = async (requestId: string) => {
-    await respondToFriendRequest.mutateAsync({ friendshipId: requestId, status: 'accepted' });
+    try {
+      await respondToFriendRequest.mutateAsync({ friendshipId: requestId, status: 'accepted' });
+    } catch (error) {
+      console.error('Failed to accept friend request:', error);
+    }
   };
 
   const handleRejectFriendRequest = async (requestId: string) => {
-    await respondToFriendRequest.mutateAsync({ friendshipId: requestId, status: 'blocked' });
+    try {
+      await respondToFriendRequest.mutateAsync({ friendshipId: requestId, status: 'blocked' });
+    } catch (error) {
+      console.error('Failed to reject friend request:', error);
+    }
   };
 
   const handleFileAttachment = () => {
@@ -112,17 +175,28 @@ export default function Messages() {
     if (files && files.length > 0 && selectedConversation) {
       const file = files[0];
       
-      // For now, just send a message indicating file was selected
-      // TODO: Implement actual file upload to Supabase storage
-      await sendMessage.mutateAsync({ 
-        content: `📎 ${file.name}`,
-        messageType: file.type.startsWith('image/') ? 'image' : 'file'
-      });
+      try {
+        await sendMessage.mutateAsync({ 
+          content: `📎 Shared file: ${file.name}`,
+          messageType: file.type.startsWith('image/') ? 'image' : 'file'
+        });
+      } catch (error) {
+        console.error('Failed to send file:', error);
+        toast({
+          title: "Error",
+          description: "Failed to send file. Please try again.",
+          variant: "destructive",
+        });
+      }
     }
   };
 
-  const handleViewProfile = (userId: string) => {
-    navigate(`/profile/${userId}`);
+  const handleDeleteConversation = async (conversationId: string) => {
+    try {
+      await deleteConversation.mutateAsync(conversationId);
+    } catch (error) {
+      console.error('Failed to delete conversation:', error);
+    }
   };
 
   useEffect(() => {
@@ -142,7 +216,7 @@ export default function Messages() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-950 to-purple-950">
         <Navbar />
-        <div className="pt-20 flex items-center justify-center min-h-screen">
+        <div className="pt-20 flex items-center justify-center h-screen">
           <div className="text-center">
             <MessageCircle className="w-16 h-16 mx-auto mb-4 text-slate-400" />
             <h2 className="text-2xl font-bold text-white mb-2">
@@ -250,8 +324,8 @@ export default function Messages() {
 
             {/* Content */}
             <div className="flex-1 overflow-y-auto">
-              {/* Show filtered friends when searching or no conversations */}
-              {(searchTerm && filteredFriends.length > 0) && (
+              {/* Show filtered friends when searching and no conversations match */}
+              {searchTerm && filteredConversations.length === 0 && filteredFriends.length > 0 && (
                 <div className="p-4">
                   <h3 className="font-semibold text-sm text-cyan-300 mb-3">Friends</h3>
                   {filteredFriends.map((friend) => {
@@ -285,7 +359,7 @@ export default function Messages() {
               )}
 
               {/* Show all friends when no search term and no conversations */}
-              {(!searchTerm && filteredConversations.length === 0) && (
+              {!searchTerm && filteredConversations.length === 0 && (
                 <div className="p-4">
                   <h3 className="font-semibold text-sm text-cyan-300 mb-3">Friends</h3>
                   {friends.map((friend) => {
@@ -330,53 +404,78 @@ export default function Messages() {
                     const unreadCount = conversation.messages?.filter(m => !m.read && m.sender_id !== user.id).length || 0;
 
                     return (
-                      <button
+                      <div
                         key={conversation.id}
-                        onClick={() => {
-                          setSelectedConversation(conversation.id);
-                          setShowMobileView(true);
-                        }}
-                        className={`w-full p-4 text-left hover:bg-cyan-500/10 transition-all duration-200 border-l-4 ${
+                        className={`flex items-center group hover:bg-cyan-500/10 transition-all duration-200 border-l-4 ${
                           selectedConversation === conversation.id
                             ? 'bg-cyan-950/30 border-cyan-400'
                             : 'border-transparent'
                         }`}
                       >
-                        <div className="flex items-start gap-3">
-                          <Avatar className="w-12 h-12">
-                            <AvatarImage src={otherParticipant?.avatar_url || ''} />
-                            <AvatarFallback className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-semibold">
-                              {otherParticipant?.full_name?.split(' ').map(n => n[0]).join('') || otherParticipant?.username[0]}
-                            </AvatarFallback>
-                          </Avatar>
-                          
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between mb-1">
-                              <h3 className="font-semibold text-white truncate">
-                                {otherParticipant?.full_name || otherParticipant?.username}
-                              </h3>
-                              {lastMessage && (
-                                <span className="text-xs text-slate-400">
-                                  {format(new Date(lastMessage.created_at), 'HH:mm')}
-                                </span>
-                              )}
-                            </div>
+                        <button
+                          onClick={() => {
+                            setSelectedConversation(conversation.id);
+                            setShowMobileView(true);
+                          }}
+                          className="flex-1 p-4 text-left"
+                        >
+                          <div className="flex items-start gap-3">
+                            <Avatar className="w-12 h-12">
+                              <AvatarImage src={otherParticipant?.avatar_url || ''} />
+                              <AvatarFallback className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-semibold">
+                                {otherParticipant?.full_name?.split(' ').map(n => n[0]).join('') || otherParticipant?.username[0]}
+                              </AvatarFallback>
+                            </Avatar>
                             
-                            <div className="flex items-center justify-between">
-                              {lastMessage && (
-                                <p className="text-sm text-slate-400 truncate">
-                                  {lastMessage.sender_id === user.id ? 'You: ' : ''}{lastMessage.content}
-                                </p>
-                              )}
-                              {unreadCount > 0 && (
-                                <Badge className="bg-cyan-500 text-white text-xs h-5 w-5 rounded-full p-0 flex items-center justify-center ml-2">
-                                  {unreadCount}
-                                </Badge>
-                              )}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between mb-1">
+                                <h3 className="font-semibold text-white truncate">
+                                  {otherParticipant?.full_name || otherParticipant?.username}
+                                </h3>
+                                {lastMessage && (
+                                  <span className="text-xs text-slate-400">
+                                    {format(new Date(lastMessage.created_at), 'HH:mm')}
+                                  </span>
+                                )}
+                              </div>
+                              
+                              <div className="flex items-center justify-between">
+                                {lastMessage && (
+                                  <p className="text-sm text-slate-400 truncate">
+                                    {lastMessage.sender_id === user.id ? 'You: ' : ''}{lastMessage.content}
+                                  </p>
+                                )}
+                                {unreadCount > 0 && (
+                                  <Badge className="bg-cyan-500 text-white text-xs h-5 w-5 rounded-full p-0 flex items-center justify-center ml-2">
+                                    {unreadCount}
+                                  </Badge>
+                                )}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </button>
+                        </button>
+                        
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="opacity-0 group-hover:opacity-100 mr-2 h-8 w-8 p-0 text-slate-400 hover:text-red-400"
+                            >
+                              <MoreVertical className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="bg-slate-800 border-slate-700">
+                            <DropdownMenuItem
+                              onClick={() => handleDeleteConversation(conversation.id)}
+                              className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                            >
+                              <Trash2 className="w-4 h-4 mr-2" />
+                              Delete Conversation
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
                     );
                   })}
                 </div>
@@ -445,9 +544,22 @@ export default function Messages() {
                       <Button variant="ghost" size="sm" className="h-10 w-10 p-0 text-cyan-400 hover:bg-cyan-500/20">
                         <Info className="w-5 h-5" />
                       </Button>
-                      <Button variant="ghost" size="sm" className="h-10 w-10 p-0 text-cyan-400 hover:bg-cyan-500/20">
-                        <MoreVertical className="w-5 h-5" />
-                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm" className="h-10 w-10 p-0 text-cyan-400 hover:bg-cyan-500/20">
+                            <MoreVertical className="w-5 h-5" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="bg-slate-800 border-slate-700">
+                          <DropdownMenuItem
+                            onClick={() => handleDeleteConversation(selectedConversation)}
+                            className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                          >
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Delete Conversation
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </div>
                 </div>

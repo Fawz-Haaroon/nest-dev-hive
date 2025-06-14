@@ -2,9 +2,9 @@
 import { Navbar } from '@/components/Navbar';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { SettingsThemeToggle } from '@/components/SettingsThemeToggle';
 import { Settings as SettingsIcon, Bell, Shield, Palette } from 'lucide-react';
 
 const Settings = () => {
@@ -116,19 +116,7 @@ const Settings = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label className="font-medium">Theme</Label>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">
-                      Choose your preferred theme
-                    </p>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="sm">Light</Button>
-                    <Button variant="outline" size="sm">Dark</Button>
-                    <Button variant="outline" size="sm">System</Button>
-                  </div>
-                </div>
+                <SettingsThemeToggle />
               </CardContent>
             </Card>
           </div>
