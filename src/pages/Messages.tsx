@@ -660,7 +660,7 @@ export default function Messages() {
                 </div>
               </>
             ) : (
-              <div className="flex-1 flex items-center justify-center">
+              <div className="flex-1 flex items-center justify-center min-h-[calc(100vh-4rem)]">
                 <div className="text-center">
                   <MessageCircle className="w-20 h-20 mx-auto mb-6 text-cyan-400" />
                   <h3 className="text-xl font-semibold text-white mb-2">
