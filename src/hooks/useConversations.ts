@@ -30,7 +30,10 @@ export const useConversations = () => {
         .or(`participant_1.eq.${user.id},participant_2.eq.${user.id}`)
         .order('updated_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching conversations:', error);
+        throw error;
+      }
       return data || [];
     },
     enabled: !!user,
@@ -40,19 +43,28 @@ export const useConversations = () => {
     mutationFn: async (participantId: string) => {
       if (!user) throw new Error('Not authenticated');
       
+      console.log('Creating conversation between:', user.id, 'and', participantId);
+      
       // Check if conversation already exists (both directions)
-      const { data: existing } = await supabase
+      const { data: existing, error: existingError } = await supabase
         .from('conversations')
         .select('id')
         .or(`and(participant_1.eq.${user.id},participant_2.eq.${participantId}),and(participant_1.eq.${participantId},participant_2.eq.${user.id})`)
         .maybeSingle();
 
+      if (existingError) {
+        console.error('Error checking existing conversation:', existingError);
+      }
+
       if (existing) {
+        console.log('Found existing conversation:', existing.id);
         return existing.id;
       }
 
       // Create new conversation with consistent participant ordering
       const [participant1, participant2] = [user.id, participantId].sort();
+      
+      console.log('Creating new conversation with participants:', participant1, participant2);
       
       const { data, error } = await supabase
         .from('conversations')
@@ -64,12 +76,20 @@ export const useConversations = () => {
         .select('id')
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error creating conversation:', error);
+        throw error;
+      }
+      
+      console.log('Successfully created conversation:', data.id);
       return data.id;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
     },
+    onError: (error) => {
+      console.error('Conversation creation failed:', error);
+    }
   });
 
   // Set up real-time subscription for conversations

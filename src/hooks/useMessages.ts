@@ -22,7 +22,10 @@ export const useMessages = (conversationId: string | null) => {
         .eq('conversation_id', conversationId)
         .order('created_at', { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching messages:', error);
+        throw error;
+      }
       return data || [];
     },
     enabled: !!conversationId,
@@ -37,6 +40,8 @@ export const useMessages = (conversationId: string | null) => {
     }) => {
       if (!user || !conversationId) throw new Error('Not authenticated or no conversation');
       
+      console.log('Sending message:', { content, conversationId, senderId: user.id });
+      
       const { error } = await supabase
         .from('messages')
         .insert({
@@ -48,18 +53,28 @@ export const useMessages = (conversationId: string | null) => {
           file_url: fileUrl || null
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error sending message:', error);
+        throw error;
+      }
 
       // Update conversation's updated_at
-      await supabase
+      const { error: updateError } = await supabase
         .from('conversations')
         .update({ updated_at: new Date().toISOString() })
         .eq('id', conversationId);
+
+      if (updateError) {
+        console.error('Error updating conversation timestamp:', updateError);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
     },
+    onError: (error) => {
+      console.error('Message sending failed:', error);
+    }
   });
 
   const markAsRead = useMutation({
@@ -72,7 +87,10 @@ export const useMessages = (conversationId: string | null) => {
         .eq('id', messageId)
         .neq('sender_id', user.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error marking message as read:', error);
+        throw error;
+      }
     },
   });
 
