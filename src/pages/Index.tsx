@@ -1,54 +1,21 @@
 
-import React, { useState } from 'react';
+import React from 'react';
+import { Link } from 'react-router-dom';
 import { Navbar } from '@/components/Navbar';
 import { ProjectCard } from '@/components/ProjectCard';
 import { SearchFilters } from '@/components/SearchFilters';
 import { Button } from '@/components/ui/button';
 import { Plus, Rocket, Users, Trophy } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { useProjects } from '@/hooks/useProjects';
 
 const Index = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-
-  // Mock data for demonstration
-  const featuredProjects = [
-    {
-      id: 1,
-      title: "AI-Powered Task Manager",
-      description: "A smart task management app with natural language processing for task creation and intelligent prioritization.",
-      tags: ["React", "Python", "OpenAI"],
-      difficulty: "Advanced",
-      status: "Open",
-      owner: "Sarah Chen",
-      members: 3,
-      upvotes: 24
-    },
-    {
-      id: 2,
-      title: "Real-time Collaboration Board",
-      description: "Build a digital whiteboard with real-time collaboration features, perfect for remote teams and brainstorming sessions.",
-      tags: ["Next.js", "WebSocket", "TypeScript"],
-      difficulty: "Intermediate",
-      status: "In Progress",
-      owner: "Marcus Rodriguez",
-      members: 5,
-      upvotes: 18
-    },
-    {
-      id: 3,
-      title: "E-commerce Analytics Dashboard",
-      description: "Create a comprehensive analytics dashboard for e-commerce businesses with real-time sales tracking and insights.",
-      tags: ["Vue.js", "Node.js", "PostgreSQL"],
-      difficulty: "Advanced",
-      status: "Open",
-      owner: "Lisa Wang",
-      members: 2,
-      upvotes: 31
-    }
-  ];
+  const { user } = useAuth();
+  const { data: projects = [], isLoading } = useProjects();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/40">
-      <Navbar isAuthenticated={isAuthenticated} setIsAuthenticated={setIsAuthenticated} />
+      <Navbar />
       
       {/* Hero Section */}
       <section className="relative overflow-hidden pt-20 pb-16">
@@ -74,10 +41,21 @@ const Index = () => {
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-8 py-3 rounded-xl font-medium transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl">
-                <Plus className="w-5 h-5 mr-2" />
-                Submit Your Project
-              </Button>
+              {user ? (
+                <Link to="/create-project">
+                  <Button size="lg" className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-8 py-3 rounded-xl font-medium transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl">
+                    <Plus className="w-5 h-5 mr-2" />
+                    Submit Your Project
+                  </Button>
+                </Link>
+              ) : (
+                <Link to="/auth">
+                  <Button size="lg" className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-8 py-3 rounded-xl font-medium transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl">
+                    <Plus className="w-5 h-5 mr-2" />
+                    Get Started
+                  </Button>
+                </Link>
+              )}
               <Button variant="outline" size="lg" className="border-2 border-slate-300 hover:border-blue-300 hover:bg-blue-50 px-8 py-3 rounded-xl font-medium transition-all duration-200">
                 Explore Projects
               </Button>
@@ -94,7 +72,7 @@ const Index = () => {
               <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-100 to-blue-200 rounded-2xl mb-4">
                 <Rocket className="w-8 h-8 text-blue-600" />
               </div>
-              <h3 className="text-3xl font-bold text-slate-900 mb-2">150+</h3>
+              <h3 className="text-3xl font-bold text-slate-900 mb-2">{projects.length}+</h3>
               <p className="text-slate-600">Active Projects</p>
             </div>
             <div className="text-center">
@@ -108,7 +86,7 @@ const Index = () => {
               <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-green-100 to-green-200 rounded-2xl mb-4">
                 <Trophy className="w-8 h-8 text-green-600" />
               </div>
-              <h3 className="text-3xl font-bold text-slate-900 mb-2">89</h3>
+              <h3 className="text-3xl font-bold text-slate-900 mb-2">{projects.filter(p => p.status === 'completed').length}</h3>
               <p className="text-slate-600">Completed</p>
             </div>
           </div>
@@ -129,17 +107,35 @@ const Index = () => {
 
           <SearchFilters />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
-            {featuredProjects.map((project) => (
-              <ProjectCard key={project.id} project={project} />
-            ))}
-          </div>
+          {isLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="bg-white rounded-2xl border border-slate-200 p-6 animate-pulse">
+                  <div className="h-4 bg-slate-200 rounded mb-4"></div>
+                  <div className="h-6 bg-slate-200 rounded mb-3"></div>
+                  <div className="h-16 bg-slate-200 rounded mb-4"></div>
+                  <div className="flex gap-2 mb-4">
+                    <div className="h-6 w-16 bg-slate-200 rounded"></div>
+                    <div className="h-6 w-20 bg-slate-200 rounded"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
+              {projects.slice(0, 6).map((project) => (
+                <ProjectCard key={project.id} project={project} />
+              ))}
+            </div>
+          )}
 
-          <div className="text-center mt-12">
-            <Button variant="outline" size="lg" className="border-2 border-slate-300 hover:border-blue-300 hover:bg-blue-50 px-8 py-3 rounded-xl font-medium transition-all duration-200">
-              View All Projects
-            </Button>
-          </div>
+          {projects.length > 6 && (
+            <div className="text-center mt-12">
+              <Button variant="outline" size="lg" className="border-2 border-slate-300 hover:border-blue-300 hover:bg-blue-50 px-8 py-3 rounded-xl font-medium transition-all duration-200">
+                View All Projects
+              </Button>
+            </div>
+          )}
         </div>
       </section>
 
@@ -160,9 +156,19 @@ const Index = () => {
               Your next career opportunity might be just one project away.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="bg-white text-blue-700 hover:bg-blue-50 px-8 py-3 rounded-xl font-medium transition-all duration-200 transform hover:scale-105">
-                Get Started Today
-              </Button>
+              {user ? (
+                <Link to="/create-project">
+                  <Button size="lg" className="bg-white text-blue-700 hover:bg-blue-50 px-8 py-3 rounded-xl font-medium transition-all duration-200 transform hover:scale-105">
+                    Create Your Project
+                  </Button>
+                </Link>
+              ) : (
+                <Link to="/auth">
+                  <Button size="lg" className="bg-white text-blue-700 hover:bg-blue-50 px-8 py-3 rounded-xl font-medium transition-all duration-200 transform hover:scale-105">
+                    Get Started Today
+                  </Button>
+                </Link>
+              )}
               <Button variant="outline" size="lg" className="border-2 border-white/30 text-white hover:bg-white/10 px-8 py-3 rounded-xl font-medium transition-all duration-200">
                 Learn More
               </Button>

@@ -1,27 +1,32 @@
 
-import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { User, Settings, LogOut, FolderOpen, Plus } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/hooks/useProfile';
 
-interface UserDropdownProps {
-  setIsAuthenticated: (value: boolean) => void;
-}
+export const UserDropdown = () => {
+  const { user, signOut } = useAuth();
+  const { data: profile } = useProfile(user?.id);
 
-export const UserDropdown = ({ setIsAuthenticated }: UserDropdownProps) => {
-  const handleLogout = () => {
-    setIsAuthenticated(false);
+  const handleLogout = async () => {
+    await signOut();
   };
+
+  const initials = profile?.username 
+    ? profile.username.slice(0, 2).toUpperCase()
+    : user?.email?.slice(0, 2).toUpperCase() || 'U';
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-10 w-10 rounded-full">
           <Avatar className="h-10 w-10 border-2 border-blue-200">
-            <AvatarImage src="/placeholder.svg" alt="Profile" />
+            <AvatarImage src={profile?.avatar_url || "/placeholder.svg"} alt="Profile" />
             <AvatarFallback className="bg-gradient-to-r from-blue-500 to-purple-500 text-white font-medium">
-              JD
+              {initials}
             </AvatarFallback>
           </Avatar>
         </Button>
@@ -29,14 +34,16 @@ export const UserDropdown = ({ setIsAuthenticated }: UserDropdownProps) => {
       <DropdownMenuContent className="w-56 bg-white border border-slate-200 rounded-xl shadow-lg" align="end">
         <div className="flex items-center gap-3 p-3 border-b border-slate-100">
           <Avatar className="h-10 w-10 border-2 border-blue-200">
-            <AvatarImage src="/placeholder.svg" alt="Profile" />
+            <AvatarImage src={profile?.avatar_url || "/placeholder.svg"} alt="Profile" />
             <AvatarFallback className="bg-gradient-to-r from-blue-500 to-purple-500 text-white font-medium">
-              JD
+              {initials}
             </AvatarFallback>
           </Avatar>
           <div className="flex flex-col">
-            <span className="text-sm font-medium text-slate-900">John Doe</span>
-            <span className="text-xs text-slate-500">john@example.com</span>
+            <span className="text-sm font-medium text-slate-900">
+              {profile?.full_name || profile?.username || 'User'}
+            </span>
+            <span className="text-xs text-slate-500">{user?.email}</span>
           </div>
         </div>
         
@@ -50,10 +57,12 @@ export const UserDropdown = ({ setIsAuthenticated }: UserDropdownProps) => {
           <span className="text-sm text-slate-700">My Projects</span>
         </DropdownMenuItem>
         
-        <DropdownMenuItem className="flex items-center gap-3 p-3 hover:bg-slate-50 cursor-pointer">
-          <Plus className="w-4 h-4 text-slate-500" />
-          <span className="text-sm text-slate-700">New Project</span>
-        </DropdownMenuItem>
+        <Link to="/create-project">
+          <DropdownMenuItem className="flex items-center gap-3 p-3 hover:bg-slate-50 cursor-pointer">
+            <Plus className="w-4 h-4 text-slate-500" />
+            <span className="text-sm text-slate-700">New Project</span>
+          </DropdownMenuItem>
+        </Link>
         
         <DropdownMenuSeparator className="my-1 bg-slate-100" />
         

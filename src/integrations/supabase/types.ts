@@ -9,10 +9,338 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      notifications: {
+        Row: {
+          created_at: string | null
+          id: string
+          message: string
+          read: boolean | null
+          related_project_id: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          message: string
+          read?: boolean | null
+          related_project_id?: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          message?: string
+          read?: boolean | null
+          related_project_id?: string | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_related_project_id_fkey"
+            columns: ["related_project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_related_project_id_fkey"
+            columns: ["related_project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          created_at: string | null
+          full_name: string | null
+          github_url: string | null
+          id: string
+          linkedin_url: string | null
+          portfolio_url: string | null
+          skills: string[] | null
+          updated_at: string | null
+          username: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string | null
+          full_name?: string | null
+          github_url?: string | null
+          id: string
+          linkedin_url?: string | null
+          portfolio_url?: string | null
+          skills?: string[] | null
+          updated_at?: string | null
+          username: string
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string | null
+          full_name?: string | null
+          github_url?: string | null
+          id?: string
+          linkedin_url?: string | null
+          portfolio_url?: string | null
+          skills?: string[] | null
+          updated_at?: string | null
+          username?: string
+        }
+        Relationships: []
+      }
+      project_applications: {
+        Row: {
+          applicant_id: string
+          created_at: string | null
+          id: string
+          message: string | null
+          project_id: string
+          status: string | null
+        }
+        Insert: {
+          applicant_id: string
+          created_at?: string | null
+          id?: string
+          message?: string | null
+          project_id: string
+          status?: string | null
+        }
+        Update: {
+          applicant_id?: string
+          created_at?: string | null
+          id?: string
+          message?: string | null
+          project_id?: string
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_applications_applicant_id_fkey"
+            columns: ["applicant_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_applications_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_applications_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_stats"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_members: {
+        Row: {
+          id: string
+          joined_at: string | null
+          project_id: string
+          role: string | null
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          joined_at?: string | null
+          project_id: string
+          role?: string | null
+          user_id: string
+        }
+        Update: {
+          id?: string
+          joined_at?: string | null
+          project_id?: string
+          role?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_members_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_members_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_votes: {
+        Row: {
+          created_at: string | null
+          id: string
+          project_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          project_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          project_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_votes_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_votes_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_votes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      projects: {
+        Row: {
+          created_at: string | null
+          description: string
+          detailed_description: string | null
+          difficulty: string
+          id: string
+          image_url: string | null
+          live_demo_url: string | null
+          max_members: number | null
+          owner_id: string
+          repository_url: string | null
+          status: string | null
+          tags: string[] | null
+          tech_stack: string[] | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description: string
+          detailed_description?: string | null
+          difficulty: string
+          id?: string
+          image_url?: string | null
+          live_demo_url?: string | null
+          max_members?: number | null
+          owner_id: string
+          repository_url?: string | null
+          status?: string | null
+          tags?: string[] | null
+          tech_stack?: string[] | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string
+          detailed_description?: string | null
+          difficulty?: string
+          id?: string
+          image_url?: string | null
+          live_demo_url?: string | null
+          max_members?: number | null
+          owner_id?: string
+          repository_url?: string | null
+          status?: string | null
+          tags?: string[] | null
+          tech_stack?: string[] | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projects_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
-      [_ in never]: never
+      projects_with_stats: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          detailed_description: string | null
+          difficulty: string | null
+          id: string | null
+          image_url: string | null
+          live_demo_url: string | null
+          max_members: number | null
+          member_count: number | null
+          owner_avatar_url: string | null
+          owner_full_name: string | null
+          owner_id: string | null
+          owner_username: string | null
+          repository_url: string | null
+          status: string | null
+          tags: string[] | null
+          tech_stack: string[] | null
+          title: string | null
+          updated_at: string | null
+          upvotes: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projects_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       [_ in never]: never
