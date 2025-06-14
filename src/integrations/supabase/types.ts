@@ -394,11 +394,13 @@ export type Database = {
       }
       projects: {
         Row: {
+          category: string | null
           created_at: string | null
           demo_images: string[] | null
           description: string
           detailed_description: string | null
           difficulty: string
+          featured: boolean | null
           id: string
           image_url: string | null
           live_demo_url: string | null
@@ -414,11 +416,13 @@ export type Database = {
           video_url: string | null
         }
         Insert: {
+          category?: string | null
           created_at?: string | null
           demo_images?: string[] | null
           description: string
           detailed_description?: string | null
           difficulty: string
+          featured?: boolean | null
           id?: string
           image_url?: string | null
           live_demo_url?: string | null
@@ -434,11 +438,13 @@ export type Database = {
           video_url?: string | null
         }
         Update: {
+          category?: string | null
           created_at?: string | null
           demo_images?: string[] | null
           description?: string
           detailed_description?: string | null
           difficulty?: string
+          featured?: boolean | null
           id?: string
           image_url?: string | null
           live_demo_url?: string | null
