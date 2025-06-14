@@ -9,6 +9,7 @@ import { useFavoriteProject } from '@/hooks/useFavorites';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import { toast } from '@/hooks/use-toast';
 
 interface ProjectCardNewProps {
@@ -19,6 +20,7 @@ interface ProjectCardNewProps {
 
 export const ProjectCardNew = ({ project, onFavorite, isFavorited }: ProjectCardNewProps) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const favoriteProject = useFavoriteProject();
 
   const { data: projectOwner } = useQuery({
@@ -91,8 +93,9 @@ export const ProjectCardNew = ({ project, onFavorite, isFavorited }: ProjectCard
     e.stopPropagation();
     e.preventDefault();
     
-    // TODO: Navigate to profile page
-    console.log('View profile:', projectOwner?.id);
+    if (projectOwner?.id) {
+      navigate(`/profile/${projectOwner.id}`);
+    }
   };
 
   const getDifficultyColor = (difficulty: string) => {
