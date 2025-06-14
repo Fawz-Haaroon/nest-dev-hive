@@ -11,6 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 interface FriendRequestModalProps {
   open: boolean;
@@ -20,6 +21,7 @@ interface FriendRequestModalProps {
 export const FriendRequestModal = ({ open, onOpenChange }: FriendRequestModalProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const { user } = useAuth();
+  const navigate = useNavigate();
   const { sendFriendRequest, allFriendships } = useFriends();
 
   const { data: searchResults = [] } = useQuery({
@@ -82,8 +84,8 @@ export const FriendRequestModal = ({ open, onOpenChange }: FriendRequestModalPro
   };
 
   const handleViewProfile = (userId: string) => {
-    // TODO: Navigate to profile page
-    console.log('View profile:', userId);
+    onOpenChange(false);
+    navigate(`/profile/${userId}`);
   };
 
   return (

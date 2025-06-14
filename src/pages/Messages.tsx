@@ -13,9 +13,11 @@ import { useCalls } from '@/hooks/useCalls';
 import { FriendRequestModal } from '@/components/FriendRequestModal';
 import { format } from 'date-fns';
 import { Navbar } from '@/components/Navbar';
+import { useNavigate } from 'react-router-dom';
 
 export default function Messages() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
   const [newMessage, setNewMessage] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
@@ -32,6 +34,7 @@ export default function Messages() {
 
   const selectedConversationData = conversations.find(c => c.id === selectedConversation);
 
+  // Enhanced search functionality - search through both conversations and friends
   const filteredConversations = conversations.filter(conversation => {
     const otherParticipant = conversation.participant_1 === user?.id 
       ? conversation.participant_2_profile 
@@ -42,6 +45,16 @@ export default function Messages() {
     return (
       otherParticipant.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       otherParticipant.username.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  });
+
+  const filteredFriends = friends.filter(friend => {
+    const friendProfile = friend.user_id === user?.id ? friend.friend_profile : friend.user_profile;
+    if (!friendProfile) return false;
+    
+    return (
+      friendProfile.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      friendProfile.username.toLowerCase().includes(searchTerm.toLowerCase())
     );
   });
 
@@ -108,6 +121,10 @@ export default function Messages() {
     }
   };
 
+  const handleViewProfile = (userId: string) => {
+    navigate(`/profile/${userId}`);
+  };
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
@@ -143,10 +160,10 @@ export default function Messages() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-950 to-purple-950">
       <Navbar />
-      <div className="pt-16 h-screen">
-        <div className="h-full flex bg-black/20 backdrop-blur-sm">
+      <div className="pt-16 h-screen flex">
+        <div className="h-full flex bg-black/20 backdrop-blur-sm w-full">
           
-          {/* Sidebar - Always visible on desktop, toggle on mobile */}
+          {/* Sidebar */}
           <div className={`${showMobileView ? 'hidden' : 'block'} lg:block w-full lg:w-80 border-r border-cyan-500/20 flex flex-col bg-slate-900/50`}>
             {/* Header */}
             <div className="p-6 border-b border-cyan-500/20">
@@ -231,10 +248,44 @@ export default function Messages() {
               </div>
             )}
 
-            {/* Friends List and Conversations */}
+            {/* Content */}
             <div className="flex-1 overflow-y-auto">
-              {/* Friends List (when no conversations or showing all friends) */}
-              {(filteredConversations.length === 0 || !searchTerm) && (
+              {/* Show filtered friends when searching or no conversations */}
+              {(searchTerm && filteredFriends.length > 0) && (
+                <div className="p-4">
+                  <h3 className="font-semibold text-sm text-cyan-300 mb-3">Friends</h3>
+                  {filteredFriends.map((friend) => {
+                    const friendProfile = friend.user_id === user.id ? friend.friend_profile : friend.user_profile;
+                    return (
+                      <button
+                        key={friend.id}
+                        onClick={() => {
+                          handleStartConversation(friendProfile.id);
+                        }}
+                        className="w-full p-3 text-left hover:bg-cyan-500/10 transition-all duration-200 rounded-lg"
+                      >
+                        <div className="flex items-center gap-3">
+                          <Avatar className="w-10 h-10">
+                            <AvatarImage src={friendProfile.avatar_url || ''} />
+                            <AvatarFallback className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-semibold">
+                              {friendProfile.full_name?.split(' ').map(n => n[0]).join('') || friendProfile.username[0]}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <h3 className="font-semibold text-white">
+                              {friendProfile.full_name || friendProfile.username}
+                            </h3>
+                            <p className="text-sm text-slate-400">@{friendProfile.username}</p>
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Show all friends when no search term and no conversations */}
+              {(!searchTerm && filteredConversations.length === 0) && (
                 <div className="p-4">
                   <h3 className="font-semibold text-sm text-cyan-300 mb-3">Friends</h3>
                   {friends.map((friend) => {
@@ -492,7 +543,7 @@ export default function Messages() {
               </>
             ) : (
               <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-slate-900/20 to-slate-800/20">
-                <div className="text-center flex flex-col items-center justify-center">
+                <div className="text-center">
                   <MessageCircle className="w-20 h-20 mx-auto mb-6 text-cyan-400" />
                   <h3 className="text-xl font-semibold text-white mb-2">
                     Select a conversation
