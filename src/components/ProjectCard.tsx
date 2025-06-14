@@ -3,7 +3,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { FavoriteButton } from '@/components/FavoriteButton';
-import { Users, ArrowUp, ExternalLink, Github, Play, MessageCircle } from 'lucide-react';
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
+import { Users, ArrowUp, ExternalLink, Github, Play, MessageCircle, Star, Eye, Calendar } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useVoteProject } from '@/hooks/useProjects';
 import { useNavigate } from 'react-router-dom';
@@ -19,23 +20,23 @@ export const ProjectCard = ({ project }: ProjectCardProps) => {
   const voteProject = useVoteProject();
 
   const getDifficultyColor = (difficulty: string) => {
-    switch (difficulty.toLowerCase()) {
-      case 'beginner': return 'bg-green-100 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800';
-      case 'intermediate': return 'bg-yellow-100 text-yellow-700 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-400 dark:border-yellow-800';
-      case 'advanced': return 'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800';
-      case 'expert': return 'bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/20 dark:text-purple-400 dark:border-purple-800';
-      default: return 'bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700';
-    }
+    const colors = {
+      beginner: 'bg-emerald-500/10 text-emerald-700 border-emerald-200/50 dark:bg-emerald-400/10 dark:text-emerald-400 dark:border-emerald-700/30',
+      intermediate: 'bg-amber-500/10 text-amber-700 border-amber-200/50 dark:bg-amber-400/10 dark:text-amber-400 dark:border-amber-700/30',
+      advanced: 'bg-red-500/10 text-red-700 border-red-200/50 dark:bg-red-400/10 dark:text-red-400 dark:border-red-700/30',
+      expert: 'bg-purple-500/10 text-purple-700 border-purple-200/50 dark:bg-purple-400/10 dark:text-purple-400 dark:border-purple-700/30',
+    };
+    return colors[difficulty.toLowerCase()] || 'bg-gray-500/10 text-gray-700 border-gray-200/50';
   };
 
   const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'open': return 'bg-green-100 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800';
-      case 'in_progress': return 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800';
-      case 'completed': return 'bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/20 dark:text-purple-400 dark:border-purple-800';
-      case 'paused': return 'bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700';
-      default: return 'bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700';
-    }
+    const colors = {
+      open: 'bg-green-500/10 text-green-700 border-green-200/50 dark:bg-green-400/10 dark:text-green-400 dark:border-green-700/30',
+      in_progress: 'bg-blue-500/10 text-blue-700 border-blue-200/50 dark:bg-blue-400/10 dark:text-blue-400 dark:border-blue-700/30',
+      completed: 'bg-purple-500/10 text-purple-700 border-purple-200/50 dark:bg-purple-400/10 dark:text-purple-400 dark:border-purple-700/30',
+      paused: 'bg-gray-500/10 text-gray-700 border-gray-200/50 dark:bg-gray-400/10 dark:text-gray-400 dark:border-gray-700/30',
+    };
+    return colors[status.toLowerCase()] || 'bg-gray-500/10 text-gray-700 border-gray-200/50';
   };
 
   const handleVote = (e: React.MouseEvent) => {
@@ -68,16 +69,16 @@ export const ProjectCard = ({ project }: ProjectCardProps) => {
 
   const ownerInitials = project.owner_username 
     ? project.owner_username.slice(0, 2).toUpperCase()
-    : 'U';
+    : 'UN';
 
   return (
-    <div className="group bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 hover:border-blue-200 dark:hover:border-blue-700 hover:shadow-xl dark:hover:shadow-2xl transition-all duration-300 overflow-hidden cursor-pointer transform hover:-translate-y-1">
-      {/* Media Section */}
-      <div className="relative h-48 bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 overflow-hidden">
+    <div className="group bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm rounded-3xl border border-slate-200/60 dark:border-slate-700/60 hover:border-blue-300/60 dark:hover:border-blue-600/60 hover:shadow-2xl dark:hover:shadow-2xl/20 transition-all duration-500 overflow-hidden cursor-pointer transform hover:-translate-y-2 hover:scale-[1.02]">
+      {/* Media Section with Perfect Symmetry */}
+      <div className="relative aspect-[4/3] bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 overflow-hidden">
         {project.video_url ? (
           <div className="relative w-full h-full">
             <video 
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
               muted
               loop
               onMouseEnter={(e) => e.currentTarget.play()}
@@ -85,102 +86,138 @@ export const ProjectCard = ({ project }: ProjectCardProps) => {
             >
               <source src={project.video_url} type="video/mp4" />
             </video>
-            <div className="absolute inset-0 bg-black/20"></div>
-            <Play className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-12 h-12 text-white/80" />
+            <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-all duration-300"></div>
+            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              <div className="p-4 bg-white/20 backdrop-blur-sm rounded-full">
+                <Play className="w-8 h-8 text-white" />
+              </div>
+            </div>
           </div>
         ) : project.image_url ? (
           <img 
             src={project.image_url} 
             alt={project.title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
           />
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 flex items-center justify-center">
-            <div className="text-white text-2xl font-bold opacity-80">
+            <div className="text-white text-4xl font-bold opacity-80">
               {project.title.charAt(0)}
             </div>
           </div>
         )}
         
-        {/* Favorite Button */}
-        <div className="absolute top-3 right-3">
+        {/* Top Row - Perfectly Aligned */}
+        <div className="absolute top-4 left-4 right-4 flex items-center justify-between">
+          <div className="flex gap-2">
+            <Badge className={`${getDifficultyColor(project.difficulty)} text-xs font-semibold px-3 py-1 rounded-full backdrop-blur-sm border`}>
+              {project.difficulty}
+            </Badge>
+            <Badge className={`${getStatusColor(project.status)} text-xs font-semibold px-3 py-1 rounded-full backdrop-blur-sm border`}>
+              {project.status.replace('_', ' ')}
+            </Badge>
+          </div>
           <FavoriteButton projectId={project.id} />
         </div>
 
-        {/* Status & Difficulty Badges */}
-        <div className="absolute bottom-3 left-3 flex gap-2">
-          <Badge className={`${getDifficultyColor(project.difficulty)} text-xs font-medium border backdrop-blur-sm`}>
-            {project.difficulty}
-          </Badge>
-          <Badge className={`${getStatusColor(project.status)} text-xs font-medium border backdrop-blur-sm`}>
-            {project.status.replace('_', ' ')}
-          </Badge>
-        </div>
-      </div>
-
-      <div className="p-6" onClick={handleViewProject}>
-        {/* Header */}
-        <div className="flex items-start justify-between mb-4">
-          <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-3 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-2 leading-tight">
-            {project.title}
-          </h3>
+        {/* Bottom Row - Vote Button */}
+        <div className="absolute bottom-4 right-4">
           <button 
             onClick={handleVote}
             disabled={!user || voteProject.isPending}
-            className="flex items-center gap-1 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105"
+            className="flex items-center gap-2 bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm text-slate-800 dark:text-slate-200 hover:bg-white dark:hover:bg-slate-800 px-3 py-2 rounded-full transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 shadow-lg"
           >
             <ArrowUp className="w-4 h-4" />
-            <span className="text-sm font-medium">{project.upvotes || 0}</span>
+            <span className="text-sm font-semibold">{project.upvotes || 0}</span>
           </button>
         </div>
-        
-        <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-4 line-clamp-3">
-          {project.description}
-        </p>
+      </div>
 
-        {/* Tags */}
+      {/* Content Section with Perfect Spacing */}
+      <div className="p-6" onClick={handleViewProject}>
+        {/* Title Section */}
+        <div className="mb-4">
+          <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-2 leading-tight">
+            {project.title}
+          </h3>
+          
+          <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed line-clamp-2">
+            {project.description}
+          </p>
+        </div>
+
+        {/* Tech Stack Tags - Symmetrically Aligned */}
         <div className="flex flex-wrap gap-2 mb-4">
           {project.tech_stack?.slice(0, 3).map((tech, index) => (
             <span
               key={index}
-              className="inline-flex items-center px-3 py-1 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-medium rounded-full hover:bg-blue-100 dark:hover:bg-blue-900/30 hover:text-blue-700 dark:hover:text-blue-400 transition-all duration-200 cursor-pointer"
+              className="inline-flex items-center px-3 py-1.5 bg-slate-100/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 text-xs font-medium rounded-lg hover:bg-blue-100/80 dark:hover:bg-blue-900/40 hover:text-blue-700 dark:hover:text-blue-400 transition-all duration-200 cursor-pointer"
             >
               {tech}
             </span>
           ))}
           {project.tech_stack && project.tech_stack.length > 3 && (
-            <span className="inline-flex items-center px-3 py-1 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-medium rounded-full">
-              +{project.tech_stack.length - 3} more
+            <span className="inline-flex items-center px-3 py-1.5 bg-slate-100/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 text-xs font-medium rounded-lg">
+              +{project.tech_stack.length - 3}
             </span>
           )}
         </div>
 
-        {/* Footer */}
-        <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-700">
-          <div className="flex items-center gap-3 text-sm text-slate-500 dark:text-slate-400">
-            <div className="flex items-center gap-2">
-              <Avatar className="w-6 h-6 ring-2 ring-blue-200 dark:ring-blue-800">
-                <AvatarImage src={project.owner_avatar_url || "/placeholder.svg"} />
-                <AvatarFallback className="text-xs bg-gradient-to-r from-blue-500 to-purple-500 text-white">
-                  {ownerInitials}
-                </AvatarFallback>
-              </Avatar>
-              <span className="font-medium text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">
-                {project.owner_full_name || project.owner_username || 'Unknown'}
-              </span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Users className="w-4 h-4" />
-              <span>{project.member_count || 0}/{project.max_members}</span>
-            </div>
-          </div>
+        {/* Owner Section with Hover Card */}
+        <div className="flex items-center justify-between pt-4 border-t border-slate-200/60 dark:border-slate-700/60">
+          <HoverCard>
+            <HoverCardTrigger asChild>
+              <div className="flex items-center gap-3 cursor-pointer group/owner">
+                <Avatar className="w-8 h-8 ring-2 ring-blue-200/60 dark:ring-blue-800/60 group-hover/owner:ring-blue-400 dark:group-hover/owner:ring-blue-600 transition-all">
+                  <AvatarImage src={project.owner_avatar_url || "/placeholder.svg"} />
+                  <AvatarFallback className="text-xs bg-gradient-to-r from-blue-500 to-purple-500 text-white font-semibold">
+                    {ownerInitials}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex flex-col">
+                  <span className="text-sm font-semibold text-slate-800 dark:text-slate-200 group-hover/owner:text-blue-600 dark:group-hover/owner:text-blue-400 transition-colors">
+                    {project.owner_full_name || project.owner_username || 'Unknown'}
+                  </span>
+                  <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
+                    <div className="flex items-center gap-1">
+                      <Users className="w-3 h-3" />
+                      <span>{project.member_count || 0}/{project.max_members}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Calendar className="w-3 h-3" />
+                      <span>{new Date(project.created_at).toLocaleDateString()}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </HoverCardTrigger>
+            <HoverCardContent className="w-80 p-4">
+              <div className="flex items-start gap-4">
+                <Avatar className="w-12 h-12">
+                  <AvatarImage src={project.owner_avatar_url || "/placeholder.svg"} />
+                  <AvatarFallback className="bg-gradient-to-r from-blue-500 to-purple-500 text-white font-bold">
+                    {ownerInitials}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1">
+                  <h4 className="font-semibold text-slate-900 dark:text-slate-100">
+                    {project.owner_full_name || project.owner_username || 'Unknown'}
+                  </h4>
+                  <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                    Project Owner • Active since {new Date(project.created_at).getFullYear()}
+                  </p>
+                </div>
+              </div>
+            </HoverCardContent>
+          </HoverCard>
           
+          {/* Action Buttons - Symmetrically Aligned */}
           <div className="flex items-center gap-2">
             {project.repository_url && (
               <Button 
                 variant="outline" 
                 size="sm" 
-                className="text-xs hover:scale-105 transition-transform" 
+                className="text-xs px-3 py-1.5 h-auto border-slate-300/60 dark:border-slate-600/60 hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-all duration-200" 
                 asChild
                 onClick={(e) => e.stopPropagation()}
               >
@@ -194,12 +231,12 @@ export const ProjectCard = ({ project }: ProjectCardProps) => {
               <Button 
                 variant="outline" 
                 size="sm" 
-                className="text-xs hover:scale-105 transition-transform" 
+                className="text-xs px-3 py-1.5 h-auto border-slate-300/60 dark:border-slate-600/60 hover:border-green-400 dark:hover:border-green-500 hover:bg-green-50 dark:hover:bg-green-950/30 transition-all duration-200" 
                 asChild
                 onClick={(e) => e.stopPropagation()}
               >
                 <a href={project.live_demo_url} target="_blank" rel="noopener noreferrer">
-                  <ExternalLink className="w-3 h-3 mr-1" />
+                  <Eye className="w-3 h-3 mr-1" />
                   Demo
                 </a>
               </Button>
@@ -207,7 +244,7 @@ export const ProjectCard = ({ project }: ProjectCardProps) => {
             <Button 
               variant="outline" 
               size="sm" 
-              className="text-xs hover:scale-105 transition-transform"
+              className="text-xs px-3 py-1.5 h-auto border-slate-300/60 dark:border-slate-600/60 hover:border-purple-400 dark:hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-950/30 transition-all duration-200"
               onClick={handleContactOwner}
             >
               <MessageCircle className="w-3 h-3 mr-1" />
@@ -215,10 +252,10 @@ export const ProjectCard = ({ project }: ProjectCardProps) => {
             </Button>
             <Button 
               size="sm" 
-              className="text-xs bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-md hover:shadow-lg hover:scale-105 transition-all duration-200"
+              className="text-xs px-4 py-1.5 h-auto bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-md hover:shadow-lg transition-all duration-200 font-semibold"
               onClick={handleJoinProject}
             >
-              Join Project
+              Join
             </Button>
           </div>
         </div>
