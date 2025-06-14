@@ -72,13 +72,13 @@ export const ProjectCard = ({ project }: ProjectCardProps) => {
     : 'UN';
 
   return (
-    <div className="group bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm rounded-3xl border border-slate-200/60 dark:border-slate-700/60 hover:border-blue-300/60 dark:hover:border-blue-600/60 hover:shadow-2xl dark:hover:shadow-2xl/20 transition-all duration-500 overflow-hidden cursor-pointer transform hover:-translate-y-2 hover:scale-[1.02]">
-      {/* Media Section with Perfect Symmetry */}
-      <div className="relative aspect-[4/3] bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 overflow-hidden">
+    <div className="group bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm rounded-2xl border border-slate-200/60 dark:border-slate-700/60 hover:border-blue-300/60 dark:hover:border-blue-600/60 hover:shadow-2xl dark:hover:shadow-2xl/20 transition-all duration-300 overflow-hidden cursor-pointer transform hover:-translate-y-1 hover:scale-[1.01]">
+      {/* Media Section */}
+      <div className="relative aspect-[16/10] bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 overflow-hidden">
         {project.video_url ? (
           <div className="relative w-full h-full">
             <video 
-              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
               muted
               loop
               onMouseEnter={(e) => e.currentTarget.play()}
@@ -97,7 +97,7 @@ export const ProjectCard = ({ project }: ProjectCardProps) => {
           <img 
             src={project.image_url} 
             alt={project.title}
-            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
           />
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 flex items-center justify-center">
@@ -107,37 +107,37 @@ export const ProjectCard = ({ project }: ProjectCardProps) => {
           </div>
         )}
         
-        {/* Top Row - Perfectly Aligned */}
+        {/* Top Row - Status and Favorite */}
         <div className="absolute top-4 left-4 right-4 flex items-center justify-between">
           <div className="flex gap-2">
-            <Badge className={`${getDifficultyColor(project.difficulty)} text-xs font-semibold px-3 py-1 rounded-full backdrop-blur-sm border`}>
+            <Badge className={`${getDifficultyColor(project.difficulty)} text-xs font-semibold px-3 py-1.5 rounded-lg backdrop-blur-sm border`}>
               {project.difficulty}
             </Badge>
-            <Badge className={`${getStatusColor(project.status)} text-xs font-semibold px-3 py-1 rounded-full backdrop-blur-sm border`}>
+            <Badge className={`${getStatusColor(project.status)} text-xs font-semibold px-3 py-1.5 rounded-lg backdrop-blur-sm border`}>
               {project.status.replace('_', ' ')}
             </Badge>
           </div>
           <FavoriteButton projectId={project.id} />
         </div>
 
-        {/* Bottom Row - Vote Button */}
+        {/* Bottom Right - Vote Button */}
         <div className="absolute bottom-4 right-4">
           <button 
             onClick={handleVote}
             disabled={!user || voteProject.isPending}
-            className="flex items-center gap-2 bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm text-slate-800 dark:text-slate-200 hover:bg-white dark:hover:bg-slate-800 px-3 py-2 rounded-full transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 shadow-lg"
+            className="flex items-center gap-2 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm text-slate-800 dark:text-slate-200 hover:bg-white dark:hover:bg-slate-800 px-4 py-2.5 rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 shadow-lg font-semibold"
           >
             <ArrowUp className="w-4 h-4" />
-            <span className="text-sm font-semibold">{project.upvotes || 0}</span>
+            <span className="text-sm">{project.upvotes || 0}</span>
           </button>
         </div>
       </div>
 
-      {/* Content Section with Perfect Spacing */}
+      {/* Content Section - Properly Spaced */}
       <div className="p-6" onClick={handleViewProject}>
-        {/* Title Section */}
-        <div className="mb-4">
-          <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-2 leading-tight">
+        {/* Title and Description */}
+        <div className="mb-5">
+          <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-3 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-2 leading-tight">
             {project.title}
           </h3>
           
@@ -146,8 +146,8 @@ export const ProjectCard = ({ project }: ProjectCardProps) => {
           </p>
         </div>
 
-        {/* Tech Stack Tags - Symmetrically Aligned */}
-        <div className="flex flex-wrap gap-2 mb-4">
+        {/* Tech Stack - Better Spacing */}
+        <div className="flex flex-wrap gap-2 mb-6">
           {project.tech_stack?.slice(0, 3).map((tech, index) => (
             <span
               key={index}
@@ -163,12 +163,12 @@ export const ProjectCard = ({ project }: ProjectCardProps) => {
           )}
         </div>
 
-        {/* Owner Section with Hover Card */}
-        <div className="flex items-center justify-between pt-4 border-t border-slate-200/60 dark:border-slate-700/60">
+        {/* Owner and Actions Section - Better Layout */}
+        <div className="flex items-center justify-between pt-5 border-t border-slate-200/60 dark:border-slate-700/60">
           <HoverCard>
             <HoverCardTrigger asChild>
               <div className="flex items-center gap-3 cursor-pointer group/owner">
-                <Avatar className="w-8 h-8 ring-2 ring-blue-200/60 dark:ring-blue-800/60 group-hover/owner:ring-blue-400 dark:group-hover/owner:ring-blue-600 transition-all">
+                <Avatar className="w-9 h-9 ring-2 ring-blue-200/60 dark:ring-blue-800/60 group-hover/owner:ring-blue-400 dark:group-hover/owner:ring-blue-600 transition-all">
                   <AvatarImage src={project.owner_avatar_url || "/placeholder.svg"} />
                   <AvatarFallback className="text-xs bg-gradient-to-r from-blue-500 to-purple-500 text-white font-semibold">
                     {ownerInitials}
@@ -211,13 +211,13 @@ export const ProjectCard = ({ project }: ProjectCardProps) => {
             </HoverCardContent>
           </HoverCard>
           
-          {/* Action Buttons - Symmetrically Aligned */}
-          <div className="flex items-center gap-2">
+          {/* Action Buttons - Better Spacing and Container */}
+          <div className="flex items-center gap-2 ml-4">
             {project.repository_url && (
               <Button 
                 variant="outline" 
                 size="sm" 
-                className="text-xs px-3 py-1.5 h-auto border-slate-300/60 dark:border-slate-600/60 hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-all duration-200" 
+                className="text-xs px-3 py-2 h-8 border-slate-300/60 dark:border-slate-600/60 hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-all duration-200 rounded-lg" 
                 asChild
                 onClick={(e) => e.stopPropagation()}
               >
@@ -231,7 +231,7 @@ export const ProjectCard = ({ project }: ProjectCardProps) => {
               <Button 
                 variant="outline" 
                 size="sm" 
-                className="text-xs px-3 py-1.5 h-auto border-slate-300/60 dark:border-slate-600/60 hover:border-green-400 dark:hover:border-green-500 hover:bg-green-50 dark:hover:bg-green-950/30 transition-all duration-200" 
+                className="text-xs px-3 py-2 h-8 border-slate-300/60 dark:border-slate-600/60 hover:border-green-400 dark:hover:border-green-500 hover:bg-green-50 dark:hover:bg-green-950/30 transition-all duration-200 rounded-lg" 
                 asChild
                 onClick={(e) => e.stopPropagation()}
               >
@@ -244,7 +244,7 @@ export const ProjectCard = ({ project }: ProjectCardProps) => {
             <Button 
               variant="outline" 
               size="sm" 
-              className="text-xs px-3 py-1.5 h-auto border-slate-300/60 dark:border-slate-600/60 hover:border-purple-400 dark:hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-950/30 transition-all duration-200"
+              className="text-xs px-3 py-2 h-8 border-slate-300/60 dark:border-slate-600/60 hover:border-purple-400 dark:hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-950/30 transition-all duration-200 rounded-lg"
               onClick={handleContactOwner}
             >
               <MessageCircle className="w-3 h-3 mr-1" />
@@ -252,7 +252,7 @@ export const ProjectCard = ({ project }: ProjectCardProps) => {
             </Button>
             <Button 
               size="sm" 
-              className="text-xs px-4 py-1.5 h-auto bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-md hover:shadow-lg transition-all duration-200 font-semibold"
+              className="text-xs px-4 py-2 h-8 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-md hover:shadow-lg transition-all duration-200 font-semibold rounded-lg"
               onClick={handleJoinProject}
             >
               Join

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Navbar } from '@/components/Navbar';
@@ -24,7 +23,7 @@ const Index = () => {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/40 dark:from-slate-900 dark:via-blue-950/30 dark:to-indigo-950/40">
       <Navbar />
       
-      {/* Hero Section */}
+      {/* Hero Section - Improved */}
       <section className="relative overflow-hidden pt-24 pb-20">
         <div className="absolute inset-0 bg-gradient-to-r from-blue-600/5 via-purple-600/5 to-pink-600/5 dark:from-blue-400/5 dark:via-purple-400/5 dark:to-pink-400/5"></div>
         
@@ -55,8 +54,8 @@ const Index = () => {
               Form teams, share ideas, and create a verified portfolio that stands out.
             </p>
 
-            {/* Enhanced Search Bar */}
-            <div className="max-w-2xl mx-auto mb-12">
+            {/* Enhanced Search Bar - Better Sizing */}
+            <div className="max-w-3xl mx-auto mb-12">
               <EnhancedSearchBar 
                 onSelectProject={(project) => navigate(`/project/${project.id}`)}
                 className="w-full"
@@ -95,25 +94,25 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Stats Section */}
-      <section className="py-20 bg-white/60 dark:bg-slate-900/60 backdrop-blur-sm border-y border-slate-200/50 dark:border-slate-700/50">
+      {/* Stats Section - Improved */}
+      <section className="py-20 bg-white/70 dark:bg-slate-900/70 backdrop-blur-sm border-y border-slate-200/50 dark:border-slate-700/50">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            <div className="text-center group hover:scale-105 transition-transform duration-300">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+            <div className="text-center group hover:scale-105 transition-transform duration-300 p-8 bg-white/60 dark:bg-slate-800/60 rounded-2xl backdrop-blur-sm">
               <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-blue-100 to-blue-200 dark:from-blue-900/30 dark:to-blue-800/30 rounded-3xl mb-6 group-hover:from-blue-200 group-hover:to-blue-300 dark:group-hover:from-blue-800/40 dark:group-hover:to-blue-700/40 transition-all duration-300 shadow-lg">
                 <Rocket className="w-10 h-10 text-blue-600 dark:text-blue-400" />
               </div>
               <h3 className="text-4xl font-bold text-slate-900 dark:text-slate-100 mb-3">{projects.length}+</h3>
               <p className="text-lg text-slate-600 dark:text-slate-400 font-medium">Active Projects</p>
             </div>
-            <div className="text-center group hover:scale-105 transition-transform duration-300">
+            <div className="text-center group hover:scale-105 transition-transform duration-300 p-8 bg-white/60 dark:bg-slate-800/60 rounded-2xl backdrop-blur-sm">
               <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-purple-100 to-purple-200 dark:from-purple-900/30 dark:to-purple-800/30 rounded-3xl mb-6 group-hover:from-purple-200 group-hover:to-purple-300 dark:group-hover:from-purple-800/40 dark:group-hover:to-purple-700/40 transition-all duration-300 shadow-lg">
                 <Users className="w-10 h-10 text-purple-600 dark:text-purple-400" />
               </div>
               <h3 className="text-4xl font-bold text-slate-900 dark:text-slate-100 mb-3">500+</h3>
               <p className="text-lg text-slate-600 dark:text-slate-400 font-medium">Developers</p>
             </div>
-            <div className="text-center group hover:scale-105 transition-transform duration-300">
+            <div className="text-center group hover:scale-105 transition-transform duration-300 p-8 bg-white/60 dark:bg-slate-800/60 rounded-2xl backdrop-blur-sm">
               <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-green-100 to-green-200 dark:from-green-900/30 dark:to-green-800/30 rounded-3xl mb-6 group-hover:from-green-200 group-hover:to-green-300 dark:group-hover:from-green-800/40 dark:group-hover:to-green-700/40 transition-all duration-300 shadow-lg">
                 <Trophy className="w-10 h-10 text-green-600 dark:text-green-400" />
               </div>
@@ -124,7 +123,7 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Featured Projects */}
+      {/* Featured Projects - Better Grid */}
       <section id="featured-projects" className="py-20">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
@@ -141,10 +140,10 @@ const Index = () => {
           </div>
 
           {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 max-w-7xl mx-auto">
               {[...Array(6)].map((_, i) => (
                 <div key={i} className="bg-white/80 dark:bg-slate-900/80 rounded-3xl border border-slate-200/60 dark:border-slate-700/60 p-6 animate-pulse">
-                  <div className="aspect-[4/3] bg-slate-200 dark:bg-slate-700 rounded-2xl mb-6"></div>
+                  <div className="aspect-[16/10] bg-slate-200 dark:bg-slate-700 rounded-2xl mb-6"></div>
                   <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded mb-4"></div>
                   <div className="h-6 bg-slate-200 dark:bg-slate-700 rounded mb-4"></div>
                   <div className="h-16 bg-slate-200 dark:bg-slate-700 rounded mb-6"></div>
@@ -157,7 +156,7 @@ const Index = () => {
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 max-w-7xl mx-auto">
               {projects.slice(0, 6).map((project) => (
                 <ProjectCard key={project.id} project={project} />
               ))}

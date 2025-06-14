@@ -49,7 +49,7 @@ export const EnhancedSearchBar = ({ onSelectProject, className = "" }: EnhancedS
     <div ref={searchRef} className={`relative ${className}`}>
       <div 
         className={`relative transition-all duration-300 ease-out ${
-          isExpanded ? 'transform scale-105' : ''
+          isExpanded ? 'transform scale-[1.02]' : ''
         }`}
         onMouseEnter={() => setIsExpanded(true)}
         onMouseLeave={() => !searchTerm && setIsExpanded(false)}
@@ -69,7 +69,7 @@ export const EnhancedSearchBar = ({ onSelectProject, className = "" }: EnhancedS
               setShowResults(true);
               setIsExpanded(true);
             }}
-            className={`pl-12 pr-12 h-12 bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm border-slate-200/60 dark:border-slate-700/60 focus:border-blue-400 dark:focus:border-blue-500 focus:ring-2 focus:ring-blue-400/20 dark:focus:ring-blue-500/20 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 text-slate-900 dark:text-slate-100 placeholder:text-slate-500 dark:placeholder:text-slate-400 ${
+            className={`pl-12 pr-16 h-14 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border-slate-200/60 dark:border-slate-700/60 focus:border-blue-400 dark:focus:border-blue-500 focus:ring-2 focus:ring-blue-400/20 dark:focus:ring-blue-500/20 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 text-slate-900 dark:text-slate-100 placeholder:text-slate-500 dark:placeholder:text-slate-400 text-base ${
               isExpanded ? 'shadow-2xl ring-2 ring-blue-400/10 dark:ring-blue-500/10' : ''
             }`}
           />
@@ -82,7 +82,7 @@ export const EnhancedSearchBar = ({ onSelectProject, className = "" }: EnhancedS
                 setShowResults(false);
                 setIsExpanded(false);
               }}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full"
+              className="absolute right-14 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full"
             >
               <X className="h-4 w-4" />
             </Button>
@@ -90,29 +90,29 @@ export const EnhancedSearchBar = ({ onSelectProject, className = "" }: EnhancedS
           <Button
             variant="ghost"
             size="sm"
-            className="absolute right-12 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full"
+            className="absolute right-3 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full"
           >
             <Filter className="h-4 w-4" />
           </Button>
         </div>
 
-        {/* Enhanced Dropdown */}
+        {/* Enhanced Dropdown with proper sizing and spacing */}
         {(showResults || isExpanded) && (
-          <div className="absolute top-full left-0 right-0 mt-2 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-2xl shadow-2xl border border-slate-200/60 dark:border-slate-700/60 z-50 max-h-96 overflow-hidden">
+          <div className="absolute top-full left-0 right-0 mt-3 bg-white/98 dark:bg-slate-900/98 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200/60 dark:border-slate-700/60 z-50 min-h-[200px] max-h-[500px] overflow-hidden">
             {searchTerm.length === 0 ? (
-              /* Empty State with Suggestions */
-              <div className="p-6">
-                <div className="mb-4">
-                  <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-3 flex items-center gap-2">
+              /* Empty State with proper spacing */
+              <div className="p-8">
+                <div className="mb-8">
+                  <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-4 flex items-center gap-2">
                     <TrendingUp className="w-4 h-4" />
                     Popular Technologies
                   </h3>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-3">
                     {popularTags.map((tag) => (
                       <Badge
                         key={tag}
                         variant="outline"
-                        className="cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900/30 hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-200"
+                        className="cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900/30 hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-200 px-4 py-2 rounded-lg text-sm font-medium"
                         onClick={() => handleRecentSearch(tag)}
                       >
                         {tag}
@@ -122,7 +122,7 @@ export const EnhancedSearchBar = ({ onSelectProject, className = "" }: EnhancedS
                 </div>
                 
                 <div>
-                  <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-3 flex items-center gap-2">
+                  <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-4 flex items-center gap-2">
                     <Clock className="w-4 h-4" />
                     Recent Searches
                   </h3>
@@ -131,7 +131,7 @@ export const EnhancedSearchBar = ({ onSelectProject, className = "" }: EnhancedS
                       <button
                         key={index}
                         onClick={() => handleRecentSearch(search)}
-                        className="w-full text-left p-3 hover:bg-slate-100/80 dark:hover:bg-slate-800/80 rounded-xl transition-all duration-200 text-sm text-slate-700 dark:text-slate-300"
+                        className="w-full text-left px-4 py-3 hover:bg-slate-100/80 dark:hover:bg-slate-800/80 rounded-xl transition-all duration-200 text-sm text-slate-700 dark:text-slate-300 font-medium"
                       >
                         {search}
                       </button>
@@ -140,45 +140,45 @@ export const EnhancedSearchBar = ({ onSelectProject, className = "" }: EnhancedS
                 </div>
               </div>
             ) : (
-              /* Search Results */
+              /* Search Results with proper container */
               <div className="max-h-80 overflow-y-auto">
                 {isLoading ? (
-                  <div className="p-6 text-center text-slate-500">
-                    <div className="inline-flex items-center gap-2">
-                      <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                      Searching...
+                  <div className="p-8 text-center text-slate-500">
+                    <div className="inline-flex items-center gap-3">
+                      <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                      <span className="text-base">Searching...</span>
                     </div>
                   </div>
                 ) : searchResults.length > 0 ? (
-                  <div className="p-2">
+                  <div className="p-3">
                     {searchResults.map((project) => (
                       <button
                         key={project.id}
                         onClick={() => handleSelect(project)}
-                        className="w-full text-left p-4 hover:bg-slate-100/80 dark:hover:bg-slate-800/80 rounded-xl transition-all duration-200 group"
+                        className="w-full text-left p-5 hover:bg-slate-100/80 dark:hover:bg-slate-800/80 rounded-xl transition-all duration-200 group mb-2"
                       >
-                        <div className="flex items-start gap-3">
-                          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-bold text-lg">
+                        <div className="flex items-start gap-4">
+                          <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-bold text-lg shrink-0">
                             {project.title.charAt(0)}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <div className="font-semibold text-slate-900 dark:text-slate-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                            <div className="font-semibold text-slate-900 dark:text-slate-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors text-base mb-1">
                               {project.title}
                             </div>
-                            <div className="text-sm text-slate-600 dark:text-slate-400 truncate mt-1">
+                            <div className="text-sm text-slate-600 dark:text-slate-400 line-clamp-2 mb-3">
                               {project.description}
                             </div>
-                            <div className="flex items-center gap-2 mt-2">
-                              {project.tags?.slice(0, 2).map((tag: string, index: number) => (
+                            <div className="flex items-center gap-3">
+                              {project.tags?.slice(0, 3).map((tag: string, index: number) => (
                                 <Badge
                                   key={index}
                                   variant="secondary"
-                                  className="text-xs bg-blue-100/80 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400"
+                                  className="text-xs bg-blue-100/80 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 px-2 py-1 rounded-md"
                                 >
                                   {tag}
                                 </Badge>
                               ))}
-                              <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
+                              <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 ml-auto">
                                 <Star className="w-3 h-3" />
                                 <span>0</span>
                               </div>
@@ -189,10 +189,10 @@ export const EnhancedSearchBar = ({ onSelectProject, className = "" }: EnhancedS
                     ))}
                   </div>
                 ) : (
-                  <div className="p-6 text-center text-slate-500">
-                    <div className="text-lg mb-2">🔍</div>
-                    <p className="text-sm">No projects found for "{searchTerm}"</p>
-                    <p className="text-xs text-slate-400 mt-1">Try different keywords or browse popular tags</p>
+                  <div className="p-8 text-center text-slate-500">
+                    <div className="text-2xl mb-3">🔍</div>
+                    <p className="text-base font-medium mb-1">No projects found for "{searchTerm}"</p>
+                    <p className="text-sm text-slate-400">Try different keywords or browse popular tags</p>
                   </div>
                 )}
               </div>
