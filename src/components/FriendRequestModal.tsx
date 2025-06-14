@@ -4,11 +4,12 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Search, UserPlus } from 'lucide-react';
+import { Search, UserPlus, Eye } from 'lucide-react';
 import { useFriends } from '@/hooks/useFriends';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 
 interface FriendRequestModalProps {
   open: boolean;
@@ -17,7 +18,7 @@ interface FriendRequestModalProps {
 
 export const FriendRequestModal = ({ open, onOpenChange }: FriendRequestModalProps) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const { sendFriendRequest } = useFriends();
+  const { sendFriendRequest, checkFriendshipStatus } = useFriends();
 
   const { data: searchResults = [] } = useQuery({
     queryKey: ['userSearch', searchTerm],
@@ -31,7 +32,16 @@ export const FriendRequestModal = ({ open, onOpenChange }: FriendRequestModalPro
         .limit(10);
 
       if (error) throw error;
-      return data || [];
+      
+      // Check friendship status for each user
+      const resultsWithStatus = await Promise.all(
+        (data || []).map(async (user) => {
+          const status = await checkFriendshipStatus(user.id);
+          return { ...user, friendshipStatus: status };
+        })
+      );
+      
+      return resultsWithStatus;
     },
     enabled: searchTerm.length >= 2,
   });
@@ -40,6 +50,19 @@ export const FriendRequestModal = ({ open, onOpenChange }: FriendRequestModalPro
     await sendFriendRequest.mutateAsync(userId);
     setSearchTerm('');
     onOpenChange(false);
+  };
+
+  const getFriendshipBadge = (status: string) => {
+    switch (status) {
+      case 'friends':
+        return <Badge className="bg-green-100 text-green-800">Friends</Badge>;
+      case 'sent':
+        return <Badge className="bg-yellow-100 text-yellow-800">Request Sent</Badge>;
+      case 'received':
+        return <Badge className="bg-blue-100 text-blue-800">Pending</Badge>;
+      default:
+        return null;
+    }
   };
 
   return (
@@ -85,17 +108,29 @@ export const FriendRequestModal = ({ open, onOpenChange }: FriendRequestModalPro
                     <div>
                       <p className="font-medium">{user.full_name || user.username}</p>
                       <p className="text-sm text-slate-500">@{user.username}</p>
+                      {getFriendshipBadge(user.friendshipStatus)}
                     </div>
                   </div>
                   
-                  <Button
-                    size="sm"
-                    onClick={() => handleSendRequest(user.id)}
-                    disabled={sendFriendRequest.isPending}
-                  >
-                    <UserPlus className="w-4 h-4 mr-2" />
-                    Add
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                    >
+                      <Eye className="w-4 h-4" />
+                    </Button>
+                    
+                    {user.friendshipStatus === 'none' && (
+                      <Button
+                        size="sm"
+                        onClick={() => handleSendRequest(user.id)}
+                        disabled={sendFriendRequest.isPending}
+                      >
+                        <UserPlus className="w-4 h-4 mr-2" />
+                        Add
+                      </Button>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
