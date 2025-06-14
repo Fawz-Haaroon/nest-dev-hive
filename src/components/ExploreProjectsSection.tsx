@@ -15,7 +15,8 @@ export const ExploreProjectsSection = () => {
       description: 'Full-stack, frontend, and backend projects',
       count: '120+ projects',
       gradient: 'from-blue-500 to-cyan-500',
-      bgGradient: 'from-blue-50 to-cyan-50 dark:from-blue-950/30 dark:to-cyan-950/30'
+      bgGradient: 'from-blue-50 to-cyan-50 dark:from-blue-950/30 dark:to-cyan-950/30',
+      categoryId: 'web-development'
     },
     {
       icon: Lightbulb,
@@ -23,7 +24,8 @@ export const ExploreProjectsSection = () => {
       description: 'Cutting-edge AI projects and models',
       count: '80+ projects',
       gradient: 'from-purple-500 to-pink-500',
-      bgGradient: 'from-purple-50 to-pink-50 dark:from-purple-950/30 dark:to-pink-950/30'
+      bgGradient: 'from-purple-50 to-pink-50 dark:from-purple-950/30 dark:to-pink-950/30',
+      categoryId: 'ai-machine-learning'
     },
     {
       icon: Target,
@@ -31,7 +33,8 @@ export const ExploreProjectsSection = () => {
       description: 'iOS, Android, and cross-platform apps',
       count: '65+ projects',
       gradient: 'from-green-500 to-emerald-500',
-      bgGradient: 'from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30'
+      bgGradient: 'from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30',
+      categoryId: 'mobile-development'
     },
     {
       icon: Zap,
@@ -39,16 +42,17 @@ export const ExploreProjectsSection = () => {
       description: 'Infrastructure and deployment projects',
       count: '45+ projects',
       gradient: 'from-orange-500 to-red-500',
-      bgGradient: 'from-orange-50 to-red-50 dark:from-orange-950/30 dark:to-red-950/30'
+      bgGradient: 'from-orange-50 to-red-50 dark:from-orange-950/30 dark:to-red-950/30',
+      categoryId: 'devops-cloud'
     }
   ];
 
   const handleExploreAll = () => {
-    navigate('/projects');
+    navigate('/explore');
   };
 
-  const handleExploreCategory = (category: string) => {
-    navigate(`/projects?category=${category.toLowerCase().replace(/\s+/g, '-')}`);
+  const handleExploreCategory = (categoryId: string) => {
+    navigate(`/explore?category=${categoryId}`);
   };
 
   return (
@@ -84,7 +88,7 @@ export const ExploreProjectsSection = () => {
               <Card 
                 key={index}
                 className={`group cursor-pointer hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 hover:scale-105 bg-gradient-to-br ${category.bgGradient} border-0 overflow-hidden relative`}
-                onClick={() => handleExploreCategory(category.title)}
+                onClick={() => handleExploreCategory(category.categoryId)}
               >
                 {/* Animated Background */}
                 <div className={`absolute inset-0 bg-gradient-to-br ${category.gradient} opacity-0 group-hover:opacity-10 transition-opacity duration-500`}></div>

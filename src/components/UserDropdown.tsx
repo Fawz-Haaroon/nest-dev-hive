@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { User, Settings, LogOut, FolderOpen, Plus, Heart } from 'lucide-react';
+import { User, Settings, LogOut, FolderOpen, Plus, Heart, Edit } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/useProfile';
 
@@ -57,6 +57,14 @@ export const UserDropdown = () => {
         >
           <User className="w-4 h-4 text-slate-500 dark:text-slate-400" />
           <span className="text-sm text-slate-700 dark:text-slate-300">View Profile</span>
+        </DropdownMenuItem>
+
+        <DropdownMenuItem 
+          className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer transition-colors"
+          onClick={() => navigate('/profile-setup')}
+        >
+          <Edit className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+          <span className="text-sm text-slate-700 dark:text-slate-300">Edit Profile</span>
         </DropdownMenuItem>
         
         <DropdownMenuItem 
