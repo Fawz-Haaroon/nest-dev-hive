@@ -17,6 +17,9 @@ export interface Project {
   live_demo_url?: string;
   max_members: number;
   image_url?: string;
+  video_url?: string;
+  demo_images?: string[];
+  media_urls?: any;
   created_at: string;
   updated_at: string;
   owner_username?: string;
@@ -24,6 +27,7 @@ export interface Project {
   owner_avatar_url?: string;
   member_count?: number;
   upvotes?: number;
+  favorites?: number;
 }
 
 export const useProjects = () => {
@@ -46,7 +50,7 @@ export const useCreateProject = () => {
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async (projectData: Omit<Project, 'id' | 'created_at' | 'updated_at' | 'owner_id' | 'owner_username' | 'owner_full_name' | 'owner_avatar_url' | 'member_count' | 'upvotes'>) => {
+    mutationFn: async (projectData: Omit<Project, 'id' | 'created_at' | 'updated_at' | 'owner_id' | 'owner_username' | 'owner_full_name' | 'owner_avatar_url' | 'member_count' | 'upvotes' | 'favorites'>) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 

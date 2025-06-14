@@ -13,6 +13,14 @@ export interface Profile {
   linkedin_url?: string;
   portfolio_url?: string;
   skills?: string[];
+  age?: number;
+  role?: string;
+  country?: string;
+  city?: string;
+  coding_platforms?: any;
+  social_media?: any;
+  profile_completed?: boolean;
+  is_profile_public?: boolean;
   created_at: string;
   updated_at: string;
 }

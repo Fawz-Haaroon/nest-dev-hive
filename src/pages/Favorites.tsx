@@ -7,6 +7,7 @@ import { Heart, ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useFavorites } from '@/hooks/useFavorites';
 import { Link } from 'react-router-dom';
+import type { Project } from '@/hooks/useProjects';
 
 const Favorites = () => {
   const { user } = useAuth();
@@ -70,9 +71,16 @@ const Favorites = () => {
           </div>
         ) : favorites.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {favorites.map((favorite) => (
-              <ProjectCard key={favorite.id} project={favorite.projects} />
-            ))}
+            {favorites.map((favorite) => {
+              // Transform the favorite data to match Project interface
+              const project: Project = {
+                ...favorite.projects,
+                status: favorite.projects.status as 'open' | 'in_progress' | 'completed' | 'paused'
+              };
+              return (
+                <ProjectCard key={favorite.id} project={project} />
+              );
+            })}
           </div>
         ) : (
           <div className="text-center py-16">
