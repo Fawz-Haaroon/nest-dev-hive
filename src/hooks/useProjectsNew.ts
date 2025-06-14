@@ -36,7 +36,26 @@ export const useProjectsNew = (filters?: {
     queryFn: async () => {
       let query = supabase
         .from('projects')
-        .select('*')
+        .select(`
+          id,
+          title,
+          description,
+          long_description,
+          owner_id,
+          status,
+          difficulty,
+          tags,
+          tech_stack,
+          category,
+          github_url,
+          live_url,
+          image_url,
+          max_members,
+          current_members,
+          featured,
+          created_at,
+          updated_at
+        `)
         .order('created_at', { ascending: false });
 
       if (filters?.category) {
@@ -62,7 +81,27 @@ export const useProjectsNew = (filters?: {
       const { data, error } = await query;
 
       if (error) throw error;
-      return data as ProjectNew[];
+      
+      return (data || []).map(project => ({
+        id: project.id,
+        title: project.title,
+        description: project.description,
+        long_description: project.long_description,
+        owner_id: project.owner_id,
+        status: project.status as 'open' | 'in-progress' | 'completed' | 'closed',
+        difficulty: project.difficulty as 'beginner' | 'intermediate' | 'advanced' | 'expert',
+        tags: project.tags || [],
+        tech_stack: project.tech_stack || [],
+        category: project.category,
+        github_url: project.github_url,
+        live_url: project.live_url,
+        image_url: project.image_url,
+        max_members: project.max_members || 5,
+        current_members: project.current_members || 1,
+        featured: project.featured || false,
+        created_at: project.created_at,
+        updated_at: project.updated_at
+      })) as ProjectNew[];
     },
   });
 };
