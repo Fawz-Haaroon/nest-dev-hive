@@ -75,7 +75,8 @@ const Favorites = () => {
               // Transform the favorite data to match Project interface
               const project: Project = {
                 ...favorite.projects,
-                status: favorite.projects.status as 'open' | 'in_progress' | 'completed' | 'paused'
+                status: favorite.projects.status as 'open' | 'in_progress' | 'completed' | 'paused',
+                difficulty: favorite.projects.difficulty as 'beginner' | 'intermediate' | 'advanced' | 'expert'
               };
               return (
                 <ProjectCard key={favorite.id} project={project} />
