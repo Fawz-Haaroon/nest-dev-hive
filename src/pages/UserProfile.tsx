@@ -226,10 +226,12 @@ export default function UserProfile() {
                 <div>
                   <h3 className="text-lg font-semibold text-white mb-3">Details</h3>
                   <div className="space-y-2">
-                    {profile.location && (
+                    {(profile.city || profile.country) && (
                       <div className="flex items-center gap-2 text-slate-300">
                         <MapPin className="w-4 h-4" />
-                        <span>{profile.location}</span>
+                        <span>
+                          {[profile.city, profile.country].filter(Boolean).join(', ')}
+                        </span>
                       </div>
                     )}
                     <div className="flex items-center gap-2 text-slate-300">
@@ -253,15 +255,15 @@ export default function UserProfile() {
                         <span>GitHub</span>
                       </a>
                     )}
-                    {profile.website_url && (
+                    {profile.portfolio_url && (
                       <a
-                        href={profile.website_url}
+                        href={profile.portfolio_url}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center gap-2 text-cyan-400 hover:text-cyan-300"
                       >
                         <Globe className="w-4 h-4" />
-                        <span>Website</span>
+                        <span>Portfolio</span>
                       </a>
                     )}
                   </div>
