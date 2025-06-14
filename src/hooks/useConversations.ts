@@ -13,6 +13,8 @@ export const useConversations = () => {
     queryFn: async () => {
       if (!user) return [];
       
+      console.log('Fetching conversations for user:', user.id);
+      
       const { data, error } = await supabase
         .from('conversations')
         .select(`
@@ -34,6 +36,8 @@ export const useConversations = () => {
         console.error('Error fetching conversations:', error);
         throw error;
       }
+      
+      console.log('Conversations fetched:', data);
       return data || [];
     },
     enabled: !!user,
@@ -71,7 +75,8 @@ export const useConversations = () => {
         .insert({
           participant_1: participant1,
           participant_2: participant2,
-          type: 'direct'
+          type: 'direct',
+          created_by: user.id
         })
         .select('id')
         .single();
@@ -96,6 +101,8 @@ export const useConversations = () => {
   useEffect(() => {
     if (!user) return;
 
+    console.log('Setting up real-time subscription for conversations');
+
     const channel = supabase
       .channel('conversations-changes')
       .on(
@@ -106,7 +113,8 @@ export const useConversations = () => {
           table: 'conversations',
           filter: `participant_1=eq.${user.id}`
         },
-        () => {
+        (payload) => {
+          console.log('Real-time conversation change (participant_1):', payload);
           queryClient.invalidateQueries({ queryKey: ['conversations'] });
         }
       )
@@ -118,13 +126,17 @@ export const useConversations = () => {
           table: 'conversations',
           filter: `participant_2=eq.${user.id}`
         },
-        () => {
+        (payload) => {
+          console.log('Real-time conversation change (participant_2):', payload);
           queryClient.invalidateQueries({ queryKey: ['conversations'] });
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Real-time conversations subscription status:', status);
+      });
 
     return () => {
+      console.log('Cleaning up conversations real-time subscription');
       supabase.removeChannel(channel);
     };
   }, [user, queryClient]);

@@ -11,7 +11,9 @@ export const useMessages = (conversationId: string | null) => {
   const { data: messages = [], isLoading } = useQuery({
     queryKey: ['messages', conversationId],
     queryFn: async () => {
-      if (!conversationId) return [];
+      if (!conversationId || !user) return [];
+      
+      console.log('Fetching messages for conversation:', conversationId);
       
       const { data, error } = await supabase
         .from('messages')
@@ -26,9 +28,11 @@ export const useMessages = (conversationId: string | null) => {
         console.error('Error fetching messages:', error);
         throw error;
       }
+      
+      console.log('Messages fetched:', data);
       return data || [];
     },
-    enabled: !!conversationId,
+    enabled: !!conversationId && !!user,
   });
 
   const sendMessage = useMutation({
@@ -42,7 +46,7 @@ export const useMessages = (conversationId: string | null) => {
       
       console.log('Sending message:', { content, conversationId, senderId: user.id });
       
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('messages')
         .insert({
           conversation_id: conversationId,
@@ -51,7 +55,9 @@ export const useMessages = (conversationId: string | null) => {
           reply_to: replyTo || null,
           message_type: messageType,
           file_url: fileUrl || null
-        });
+        })
+        .select()
+        .single();
 
       if (error) {
         console.error('Error sending message:', error);
@@ -67,6 +73,8 @@ export const useMessages = (conversationId: string | null) => {
       if (updateError) {
         console.error('Error updating conversation timestamp:', updateError);
       }
+
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
@@ -96,7 +104,9 @@ export const useMessages = (conversationId: string | null) => {
 
   // Set up real-time subscription for messages
   useEffect(() => {
-    if (!conversationId) return;
+    if (!conversationId || !user) return;
+
+    console.log('Setting up real-time subscription for conversation:', conversationId);
 
     const channel = supabase
       .channel(`messages-${conversationId}`)
@@ -108,16 +118,33 @@ export const useMessages = (conversationId: string | null) => {
           table: 'messages',
           filter: `conversation_id=eq.${conversationId}`
         },
-        () => {
+        (payload) => {
+          console.log('Real-time message received:', payload);
           queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
         }
       )
-      .subscribe();
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'messages',
+          filter: `conversation_id=eq.${conversationId}`
+        },
+        (payload) => {
+          console.log('Real-time message updated:', payload);
+          queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
+        }
+      )
+      .subscribe((status) => {
+        console.log('Real-time subscription status:', status);
+      });
 
     return () => {
+      console.log('Cleaning up real-time subscription');
       supabase.removeChannel(channel);
     };
-  }, [conversationId, queryClient]);
+  }, [conversationId, queryClient, user]);
 
   return {
     messages,

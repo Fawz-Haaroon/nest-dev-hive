@@ -13,6 +13,8 @@ export const useFriends = () => {
     queryFn: async () => {
       if (!user) return [];
       
+      console.log('Fetching friends for user:', user.id);
+      
       const { data, error } = await supabase
         .from('friends')
         .select(`
@@ -23,7 +25,12 @@ export const useFriends = () => {
         .or(`user_id.eq.${user.id},friend_id.eq.${user.id}`)
         .eq('status', 'accepted');
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching friends:', error);
+        throw error;
+      }
+      
+      console.log('Friends fetched:', data);
       return data || [];
     },
     enabled: !!user,
@@ -43,7 +50,11 @@ export const useFriends = () => {
         `)
         .or(`user_id.eq.${user.id},friend_id.eq.${user.id}`);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching all friendships:', error);
+        throw error;
+      }
+      
       return data || [];
     },
     enabled: !!user,
@@ -67,6 +78,8 @@ export const useFriends = () => {
   const sendFriendRequest = useMutation({
     mutationFn: async (friendId: string) => {
       if (!user) throw new Error('Not authenticated');
+      
+      console.log('Sending friend request to:', friendId);
       
       // Check if any friendship record exists
       const existing = allFriendships.find(f => 
@@ -92,7 +105,12 @@ export const useFriends = () => {
           status: 'pending'
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error sending friend request:', error);
+        throw error;
+      }
+      
+      console.log('Friend request sent successfully');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['friends'] });
@@ -114,12 +132,19 @@ export const useFriends = () => {
 
   const respondToFriendRequest = useMutation({
     mutationFn: async ({ friendshipId, status }: { friendshipId: string; status: 'accepted' | 'blocked' }) => {
+      console.log('Responding to friend request:', friendshipId, status);
+      
       const { error } = await supabase
         .from('friends')
         .update({ status, updated_at: new Date().toISOString() })
         .eq('id', friendshipId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error responding to friend request:', error);
+        throw error;
+      }
+      
+      console.log('Friend request response successful');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['friends'] });

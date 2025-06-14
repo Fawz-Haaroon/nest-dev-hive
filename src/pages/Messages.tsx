@@ -42,6 +42,14 @@ export default function Messages() {
   const { friends, pendingRequests, isLoading: friendsLoading, respondToFriendRequest } = useFriends();
   const { initiateCall } = useCalls();
 
+  console.log('Messages component state:', {
+    user: user?.id,
+    selectedConversation,
+    conversationsCount: conversations.length,
+    messagesCount: messages.length,
+    friendsCount: friends.length
+  });
+
   const selectedConversationData = conversations.find(c => c.id === selectedConversation);
 
   const deleteConversation = useMutation({
@@ -97,8 +105,10 @@ export default function Messages() {
   const handleSendMessage = async () => {
     if (newMessage.trim() && selectedConversation) {
       try {
+        console.log('Sending message:', newMessage.trim());
         await sendMessage.mutateAsync({ content: newMessage.trim() });
         setNewMessage('');
+        console.log('Message sent successfully');
       } catch (error) {
         console.error('Failed to send message:', error);
         toast({
