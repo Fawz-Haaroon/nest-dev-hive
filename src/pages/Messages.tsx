@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -46,8 +47,12 @@ export default function Messages() {
 
   const handleSendMessage = async () => {
     if (newMessage.trim() && selectedConversation) {
-      await sendMessage.mutateAsync({ content: newMessage.trim() });
-      setNewMessage('');
+      try {
+        await sendMessage.mutateAsync({ content: newMessage.trim() });
+        setNewMessage('');
+      } catch (error) {
+        console.error('Failed to send message:', error);
+      }
     }
   };
 
@@ -59,9 +64,13 @@ export default function Messages() {
   };
 
   const handleStartConversation = async (friendId: string) => {
-    const conversationId = await createConversation.mutateAsync(friendId);
-    setSelectedConversation(conversationId);
-    setShowMobileView(true);
+    try {
+      const conversationId = await createConversation.mutateAsync(friendId);
+      setSelectedConversation(conversationId);
+      setShowMobileView(true);
+    } catch (error) {
+      console.error('Failed to create conversation:', error);
+    }
   };
 
   const handleCall = async (type: 'voice' | 'video') => {
@@ -85,11 +94,17 @@ export default function Messages() {
     fileInputRef.current?.click();
   };
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
-    if (files && files.length > 0) {
-      // Handle file upload logic here
-      console.log('Selected files:', files);
+    if (files && files.length > 0 && selectedConversation) {
+      const file = files[0];
+      
+      // For now, just send a message indicating file was selected
+      // TODO: Implement actual file upload to Supabase storage
+      await sendMessage.mutateAsync({ 
+        content: `📎 ${file.name}`,
+        messageType: file.type.startsWith('image/') ? 'image' : 'file'
+      });
     }
   };
 
@@ -128,8 +143,8 @@ export default function Messages() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-950 to-purple-950">
       <Navbar />
-      <div className="pt-16">
-        <div className="h-screen flex bg-black/20 backdrop-blur-sm">
+      <div className="pt-16 h-screen">
+        <div className="h-full flex bg-black/20 backdrop-blur-sm">
           
           {/* Sidebar - Always visible on desktop, toggle on mobile */}
           <div className={`${showMobileView ? 'hidden' : 'block'} lg:block w-full lg:w-80 border-r border-cyan-500/20 flex flex-col bg-slate-900/50`}>
@@ -218,8 +233,8 @@ export default function Messages() {
 
             {/* Friends List and Conversations */}
             <div className="flex-1 overflow-y-auto">
-              {/* Friends List (when no conversations) */}
-              {filteredConversations.length === 0 && !searchTerm && (
+              {/* Friends List (when no conversations or showing all friends) */}
+              {(filteredConversations.length === 0 || !searchTerm) && (
                 <div className="p-4">
                   <h3 className="font-semibold text-sm text-cyan-300 mb-3">Friends</h3>
                   {friends.map((friend) => {
@@ -253,71 +268,73 @@ export default function Messages() {
               )}
 
               {/* Conversations */}
-              <div className="flex-1 overflow-y-auto">
-                {filteredConversations.map((conversation) => {
-                  const otherParticipant = conversation.participant_1 === user?.id 
-                    ? conversation.participant_2_profile 
-                    : conversation.participant_1_profile;
-                  
-                  const lastMessage = conversation.messages?.[conversation.messages.length - 1];
-                  const unreadCount = conversation.messages?.filter(m => !m.read && m.sender_id !== user.id).length || 0;
+              {filteredConversations.length > 0 && (
+                <div className="flex-1 overflow-y-auto">
+                  {filteredConversations.map((conversation) => {
+                    const otherParticipant = conversation.participant_1 === user?.id 
+                      ? conversation.participant_2_profile 
+                      : conversation.participant_1_profile;
+                    
+                    const lastMessage = conversation.messages?.[conversation.messages.length - 1];
+                    const unreadCount = conversation.messages?.filter(m => !m.read && m.sender_id !== user.id).length || 0;
 
-                  return (
-                    <button
-                      key={conversation.id}
-                      onClick={() => {
-                        setSelectedConversation(conversation.id);
-                        setShowMobileView(true);
-                      }}
-                      className={`w-full p-4 text-left hover:bg-cyan-500/10 transition-all duration-200 border-l-4 ${
-                        selectedConversation === conversation.id
-                          ? 'bg-cyan-950/30 border-cyan-400'
-                          : 'border-transparent'
-                      }`}
-                    >
-                      <div className="flex items-start gap-3">
-                        <Avatar className="w-12 h-12">
-                          <AvatarImage src={otherParticipant?.avatar_url || ''} />
-                          <AvatarFallback className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-semibold">
-                            {otherParticipant?.full_name?.split(' ').map(n => n[0]).join('') || otherParticipant?.username[0]}
-                          </AvatarFallback>
-                        </Avatar>
-                        
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between mb-1">
-                            <h3 className="font-semibold text-white truncate">
-                              {otherParticipant?.full_name || otherParticipant?.username}
-                            </h3>
-                            {lastMessage && (
-                              <span className="text-xs text-slate-400">
-                                {format(new Date(lastMessage.created_at), 'HH:mm')}
-                              </span>
-                            )}
-                          </div>
+                    return (
+                      <button
+                        key={conversation.id}
+                        onClick={() => {
+                          setSelectedConversation(conversation.id);
+                          setShowMobileView(true);
+                        }}
+                        className={`w-full p-4 text-left hover:bg-cyan-500/10 transition-all duration-200 border-l-4 ${
+                          selectedConversation === conversation.id
+                            ? 'bg-cyan-950/30 border-cyan-400'
+                            : 'border-transparent'
+                        }`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <Avatar className="w-12 h-12">
+                            <AvatarImage src={otherParticipant?.avatar_url || ''} />
+                            <AvatarFallback className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-semibold">
+                              {otherParticipant?.full_name?.split(' ').map(n => n[0]).join('') || otherParticipant?.username[0]}
+                            </AvatarFallback>
+                          </Avatar>
                           
-                          <div className="flex items-center justify-between">
-                            {lastMessage && (
-                              <p className="text-sm text-slate-400 truncate">
-                                {lastMessage.sender_id === user.id ? 'You: ' : ''}{lastMessage.content}
-                              </p>
-                            )}
-                            {unreadCount > 0 && (
-                              <Badge className="bg-cyan-500 text-white text-xs h-5 w-5 rounded-full p-0 flex items-center justify-center ml-2">
-                                {unreadCount}
-                              </Badge>
-                            )}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between mb-1">
+                              <h3 className="font-semibold text-white truncate">
+                                {otherParticipant?.full_name || otherParticipant?.username}
+                              </h3>
+                              {lastMessage && (
+                                <span className="text-xs text-slate-400">
+                                  {format(new Date(lastMessage.created_at), 'HH:mm')}
+                                </span>
+                              )}
+                            </div>
+                            
+                            <div className="flex items-center justify-between">
+                              {lastMessage && (
+                                <p className="text-sm text-slate-400 truncate">
+                                  {lastMessage.sender_id === user.id ? 'You: ' : ''}{lastMessage.content}
+                                </p>
+                              )}
+                              {unreadCount > 0 && (
+                                <Badge className="bg-cyan-500 text-white text-xs h-5 w-5 rounded-full p-0 flex items-center justify-center ml-2">
+                                  {unreadCount}
+                                </Badge>
+                              )}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
 
           {/* Main Chat Area */}
-          <div className={`${showMobileView ? 'block' : 'hidden'} lg:block flex-1 flex flex-col bg-slate-900/30`}>
+          <div className={`${showMobileView ? 'block' : 'hidden'} lg:block flex-1 flex flex-col bg-gradient-to-b from-slate-900/30 to-slate-800/20`}>
             {selectedConversation ? (
               <>
                 {/* Chat Header */}
@@ -390,6 +407,14 @@ export default function Messages() {
                     <div className="flex justify-center items-center h-full">
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-400"></div>
                     </div>
+                  ) : messages.length === 0 ? (
+                    <div className="flex justify-center items-center h-full">
+                      <div className="text-center">
+                        <MessageCircle className="w-12 h-12 mx-auto mb-4 text-cyan-400" />
+                        <p className="text-cyan-300">Start a conversation!</p>
+                        <p className="text-slate-400 text-sm">Send your first message below</p>
+                      </div>
+                    </div>
                   ) : (
                     messages.map((message) => (
                       <div
@@ -456,7 +481,11 @@ export default function Messages() {
                       disabled={!newMessage.trim() || sendMessage.isPending}
                       className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white h-10 w-10 p-0 rounded-xl shrink-0"
                     >
-                      <Send className="w-4 h-4" />
+                      {sendMessage.isPending ? (
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      ) : (
+                        <Send className="w-4 h-4" />
+                      )}
                     </Button>
                   </div>
                 </div>

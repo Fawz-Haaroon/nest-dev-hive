@@ -19,7 +19,7 @@ export const useConversations = () => {
           *,
           participant_1_profile:profiles!conversations_participant_1_fkey(id, username, full_name, avatar_url),
           participant_2_profile:profiles!conversations_participant_2_fkey(id, username, full_name, avatar_url),
-          messages(
+          messages!inner(
             id,
             content,
             created_at,
@@ -31,7 +31,22 @@ export const useConversations = () => {
         .order('updated_at', { ascending: false });
 
       if (error) throw error;
-      return data || [];
+      
+      // Remove duplicates based on participants (normalize order)
+      const uniqueConversations = [];
+      const seenPairs = new Set();
+      
+      for (const conv of data || []) {
+        const participants = [conv.participant_1, conv.participant_2].sort();
+        const pairKey = participants.join('-');
+        
+        if (!seenPairs.has(pairKey)) {
+          seenPairs.add(pairKey);
+          uniqueConversations.push(conv);
+        }
+      }
+      
+      return uniqueConversations;
     },
     enabled: !!user,
   });
@@ -40,7 +55,7 @@ export const useConversations = () => {
     mutationFn: async (participantId: string) => {
       if (!user) throw new Error('Not authenticated');
       
-      // Check if conversation already exists
+      // Check if conversation already exists (both directions)
       const { data: existing } = await supabase
         .from('conversations')
         .select('id')
@@ -51,11 +66,14 @@ export const useConversations = () => {
         return existing.id;
       }
 
+      // Create new conversation with consistent participant ordering
+      const [participant1, participant2] = [user.id, participantId].sort();
+      
       const { data, error } = await supabase
         .from('conversations')
         .insert({
-          participant_1: user.id,
-          participant_2: participantId,
+          participant_1: participant1,
+          participant_2: participant2,
           type: 'direct'
         })
         .select('id')

@@ -30,7 +30,12 @@ export const useMessages = (conversationId: string | null) => {
   });
 
   const sendMessage = useMutation({
-    mutationFn: async ({ content, replyTo }: { content: string; replyTo?: string }) => {
+    mutationFn: async ({ content, replyTo, fileUrl, messageType = 'text' }: { 
+      content: string; 
+      replyTo?: string; 
+      fileUrl?: string;
+      messageType?: 'text' | 'image' | 'video' | 'audio' | 'file';
+    }) => {
       if (!user || !conversationId) throw new Error('Not authenticated or no conversation');
       
       const { error } = await supabase
@@ -40,7 +45,8 @@ export const useMessages = (conversationId: string | null) => {
           sender_id: user.id,
           content,
           reply_to: replyTo || null,
-          message_type: 'text'
+          message_type: messageType,
+          file_url: fileUrl || null
         });
 
       if (error) throw error;
