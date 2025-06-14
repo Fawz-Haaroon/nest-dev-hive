@@ -9,26 +9,111 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      calls: {
+        Row: {
+          call_type: string
+          caller_id: string
+          conversation_id: string
+          duration: number | null
+          ended_at: string | null
+          id: string
+          started_at: string
+          status: string
+        }
+        Insert: {
+          call_type: string
+          caller_id: string
+          conversation_id: string
+          duration?: number | null
+          ended_at?: string | null
+          id?: string
+          started_at?: string
+          status?: string
+        }
+        Update: {
+          call_type?: string
+          caller_id?: string
+          conversation_id?: string
+          duration?: number | null
+          ended_at?: string | null
+          id?: string
+          started_at?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calls_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conversation_participants: {
+        Row: {
+          conversation_id: string
+          id: string
+          joined_at: string
+          left_at: string | null
+          role: string | null
+          user_id: string
+        }
+        Insert: {
+          conversation_id: string
+          id?: string
+          joined_at?: string
+          left_at?: string | null
+          role?: string | null
+          user_id: string
+        }
+        Update: {
+          conversation_id?: string
+          id?: string
+          joined_at?: string
+          left_at?: string | null
+          role?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_participants_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       conversations: {
         Row: {
           created_at: string | null
+          created_by: string | null
           id: string
+          name: string | null
           participant_1: string
           participant_2: string
+          type: string | null
           updated_at: string | null
         }
         Insert: {
           created_at?: string | null
+          created_by?: string | null
           id?: string
+          name?: string | null
           participant_1: string
           participant_2: string
+          type?: string | null
           updated_at?: string | null
         }
         Update: {
           created_at?: string | null
+          created_by?: string | null
           id?: string
+          name?: string | null
           participant_1?: string
           participant_2?: string
+          type?: string | null
           updated_at?: string | null
         }
         Relationships: [
@@ -48,29 +133,97 @@ export type Database = {
           },
         ]
       }
+      friends: {
+        Row: {
+          created_at: string
+          friend_id: string
+          id: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          friend_id: string
+          id?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          friend_id?: string
+          id?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      message_status: {
+        Row: {
+          id: string
+          message_id: string
+          status: string
+          timestamp: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          message_id: string
+          status: string
+          timestamp?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          message_id?: string
+          status?: string
+          timestamp?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_status_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       messages: {
         Row: {
           content: string
           conversation_id: string
           created_at: string | null
+          file_url: string | null
           id: string
+          message_type: string | null
           read: boolean | null
+          reply_to: string | null
           sender_id: string
         }
         Insert: {
           content: string
           conversation_id: string
           created_at?: string | null
+          file_url?: string | null
           id?: string
+          message_type?: string | null
           read?: boolean | null
+          reply_to?: string | null
           sender_id: string
         }
         Update: {
           content?: string
           conversation_id?: string
           created_at?: string | null
+          file_url?: string | null
           id?: string
+          message_type?: string | null
           read?: boolean | null
+          reply_to?: string | null
           sender_id?: string
         }
         Relationships: [
@@ -79,6 +232,13 @@ export type Database = {
             columns: ["conversation_id"]
             isOneToOne: false
             referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_reply_to_fkey"
+            columns: ["reply_to"]
+            isOneToOne: false
+            referencedRelation: "messages"
             referencedColumns: ["id"]
           },
           {
