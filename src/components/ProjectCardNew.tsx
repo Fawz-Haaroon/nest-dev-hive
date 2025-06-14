@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -243,9 +242,9 @@ export const ProjectCardNew = ({ project, onFavorite, isFavorited }: ProjectCard
                 </a>
               </Button>
             )}
-            {project.live_demo_url && (
+            {project.live_url && (
               <Button variant="ghost" size="sm" asChild className="h-8 w-8 p-0">
-                <a href={project.live_demo_url} target="_blank" rel="noopener noreferrer">
+                <a href={project.live_url} target="_blank" rel="noopener noreferrer">
                   <ExternalLink className="w-4 h-4" />
                 </a>
               </Button>
