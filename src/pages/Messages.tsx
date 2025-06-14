@@ -492,8 +492,8 @@ export default function Messages() {
               </>
             ) : (
               <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-slate-900/20 to-slate-800/20">
-                <div className="text-center">
-                  <MessageCircle className="w-16 h-16 mx-auto mb-4 text-cyan-400" />
+                <div className="text-center flex flex-col items-center justify-center">
+                  <MessageCircle className="w-20 h-20 mx-auto mb-6 text-cyan-400" />
                   <h3 className="text-xl font-semibold text-white mb-2">
                     Select a conversation
                   </h3>
