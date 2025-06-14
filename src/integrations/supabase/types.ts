@@ -9,6 +9,87 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      conversations: {
+        Row: {
+          created_at: string | null
+          id: string
+          participant_1: string
+          participant_2: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          participant_1: string
+          participant_2: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          participant_1?: string
+          participant_2?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversations_participant_1_fkey"
+            columns: ["participant_1"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversations_participant_2_fkey"
+            columns: ["participant_2"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string | null
+          id: string
+          read: boolean | null
+          sender_id: string
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          created_at?: string | null
+          id?: string
+          read?: boolean | null
+          sender_id: string
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string | null
+          id?: string
+          read?: boolean | null
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           created_at: string | null
@@ -66,41 +147,65 @@ export type Database = {
       }
       profiles: {
         Row: {
+          age: number | null
           avatar_url: string | null
           bio: string | null
+          city: string | null
+          coding_platforms: Json | null
+          country: string | null
           created_at: string | null
           full_name: string | null
           github_url: string | null
           id: string
+          is_profile_public: boolean | null
           linkedin_url: string | null
           portfolio_url: string | null
+          profile_completed: boolean | null
+          role: string | null
           skills: string[] | null
+          social_media: Json | null
           updated_at: string | null
           username: string
         }
         Insert: {
+          age?: number | null
           avatar_url?: string | null
           bio?: string | null
+          city?: string | null
+          coding_platforms?: Json | null
+          country?: string | null
           created_at?: string | null
           full_name?: string | null
           github_url?: string | null
           id: string
+          is_profile_public?: boolean | null
           linkedin_url?: string | null
           portfolio_url?: string | null
+          profile_completed?: boolean | null
+          role?: string | null
           skills?: string[] | null
+          social_media?: Json | null
           updated_at?: string | null
           username: string
         }
         Update: {
+          age?: number | null
           avatar_url?: string | null
           bio?: string | null
+          city?: string | null
+          coding_platforms?: Json | null
+          country?: string | null
           created_at?: string | null
           full_name?: string | null
           github_url?: string | null
           id?: string
+          is_profile_public?: boolean | null
           linkedin_url?: string | null
           portfolio_url?: string | null
+          profile_completed?: boolean | null
+          role?: string | null
           skills?: string[] | null
+          social_media?: Json | null
           updated_at?: string | null
           username?: string
         }
@@ -151,6 +256,49 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects_with_stats"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_favorites: {
+        Row: {
+          created_at: string | null
+          id: string
+          project_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          project_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          project_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_favorites_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_favorites_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_favorites_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -247,6 +395,7 @@ export type Database = {
       projects: {
         Row: {
           created_at: string | null
+          demo_images: string[] | null
           description: string
           detailed_description: string | null
           difficulty: string
@@ -254,6 +403,7 @@ export type Database = {
           image_url: string | null
           live_demo_url: string | null
           max_members: number | null
+          media_urls: Json | null
           owner_id: string
           repository_url: string | null
           status: string | null
@@ -261,9 +411,11 @@ export type Database = {
           tech_stack: string[] | null
           title: string
           updated_at: string | null
+          video_url: string | null
         }
         Insert: {
           created_at?: string | null
+          demo_images?: string[] | null
           description: string
           detailed_description?: string | null
           difficulty: string
@@ -271,6 +423,7 @@ export type Database = {
           image_url?: string | null
           live_demo_url?: string | null
           max_members?: number | null
+          media_urls?: Json | null
           owner_id: string
           repository_url?: string | null
           status?: string | null
@@ -278,9 +431,11 @@ export type Database = {
           tech_stack?: string[] | null
           title: string
           updated_at?: string | null
+          video_url?: string | null
         }
         Update: {
           created_at?: string | null
+          demo_images?: string[] | null
           description?: string
           detailed_description?: string | null
           difficulty?: string
@@ -288,6 +443,7 @@ export type Database = {
           image_url?: string | null
           live_demo_url?: string | null
           max_members?: number | null
+          media_urls?: Json | null
           owner_id?: string
           repository_url?: string | null
           status?: string | null
@@ -295,6 +451,7 @@ export type Database = {
           tech_stack?: string[] | null
           title?: string
           updated_at?: string | null
+          video_url?: string | null
         }
         Relationships: [
           {
@@ -311,13 +468,16 @@ export type Database = {
       projects_with_stats: {
         Row: {
           created_at: string | null
+          demo_images: string[] | null
           description: string | null
           detailed_description: string | null
           difficulty: string | null
+          favorites: number | null
           id: string | null
           image_url: string | null
           live_demo_url: string | null
           max_members: number | null
+          media_urls: Json | null
           member_count: number | null
           owner_avatar_url: string | null
           owner_full_name: string | null
@@ -330,6 +490,7 @@ export type Database = {
           title: string | null
           updated_at: string | null
           upvotes: number | null
+          video_url: string | null
         }
         Relationships: [
           {
@@ -343,7 +504,18 @@ export type Database = {
       }
     }
     Functions: {
-      [_ in never]: never
+      search_projects: {
+        Args: { search_term: string }
+        Returns: {
+          id: string
+          title: string
+          description: string
+          tags: string[]
+          tech_stack: string[]
+          owner_username: string
+          similarity: number
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
