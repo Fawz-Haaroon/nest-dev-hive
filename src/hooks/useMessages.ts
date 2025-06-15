@@ -82,6 +82,8 @@ export const useMessages = (conversationId: string | null) => {
     mutationFn: async () => {
       if (!user || !conversationId) throw new Error('Not authenticated');
       
+      console.log('Marking messages as read for conversation:', conversationId);
+      
       const { error } = await supabase
         .from('messages')
         .update({ read: true })
@@ -93,9 +95,12 @@ export const useMessages = (conversationId: string | null) => {
         console.error('Error marking messages as read:', error);
         throw error;
       }
+      
+      console.log('Messages marked as read successfully');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
+      queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
     },
   });
 
@@ -143,15 +148,22 @@ export const useMessages = (conversationId: string | null) => {
     };
   }, [conversationId, queryClient, user]);
 
-  // Auto-mark messages as read when viewing them
+  // Auto-mark messages as read when viewing them - with proper debouncing
   useEffect(() => {
     if (conversationId && messages.length > 0 && user) {
       const unreadMessages = messages.filter(m => !m.read && m.sender_id !== user.id);
+      console.log('Unread messages count:', unreadMessages.length);
+      
       if (unreadMessages.length > 0) {
-        markMessagesAsRead.mutate();
+        // Add a small delay to ensure the user has actually viewed the messages
+        const timer = setTimeout(() => {
+          markMessagesAsRead.mutate();
+        }, 1000);
+
+        return () => clearTimeout(timer);
       }
     }
-  }, [conversationId, messages, user?.id]);
+  }, [conversationId, messages.length, user?.id]);
 
   return {
     messages,
