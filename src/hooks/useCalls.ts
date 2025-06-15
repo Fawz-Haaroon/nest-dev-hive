@@ -1,6 +1,5 @@
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
 
@@ -12,26 +11,19 @@ export const useCalls = () => {
     mutationFn: async ({ conversationId, callType }: { conversationId: string; callType: 'voice' | 'video' }) => {
       if (!user) throw new Error('Not authenticated');
       
-      const { data, error } = await supabase
-        .from('calls')
-        .insert({
-          conversation_id: conversationId,
-          caller_id: user.id,
-          call_type: callType,
-          status: 'initiated'
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
+      // For now, just show a toast since we don't have a calls table
+      toast({
+        title: `${callType === 'voice' ? 'Voice' : 'Video'} call feature`,
+        description: "Call functionality is not yet implemented",
+      });
+      
+      return { id: 'placeholder', conversation_id: conversationId, call_type: callType };
     },
     onSuccess: (call) => {
       toast({
         title: `${call.call_type === 'voice' ? 'Voice' : 'Video'} call initiated`,
         description: "Connecting...",
       });
-      queryClient.invalidateQueries({ queryKey: ['calls'] });
     },
     onError: (error) => {
       toast({
@@ -44,19 +36,11 @@ export const useCalls = () => {
 
   const endCall = useMutation({
     mutationFn: async (callId: string) => {
-      const endTime = new Date().toISOString();
-      const { error } = await supabase
-        .from('calls')
-        .update({
-          status: 'ended',
-          ended_at: endTime
-        })
-        .eq('id', callId);
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['calls'] });
+      // Placeholder for ending call functionality
+      toast({
+        title: "Call ended",
+        description: "Call functionality is not yet implemented",
+      });
     },
   });
 
