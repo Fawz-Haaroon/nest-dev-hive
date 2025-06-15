@@ -78,32 +78,6 @@ export const useMessages = (conversationId: string | null) => {
     },
   });
 
-  const markMessagesAsRead = useMutation({
-    mutationFn: async () => {
-      if (!user || !conversationId) throw new Error('Not authenticated');
-      
-      console.log('Marking messages as read for conversation:', conversationId);
-      
-      const { error } = await supabase
-        .from('messages')
-        .update({ read: true })
-        .eq('conversation_id', conversationId)
-        .neq('sender_id', user.id)
-        .eq('read', false);
-
-      if (error) {
-        console.error('Error marking messages as read:', error);
-        throw error;
-      }
-      
-      console.log('Messages marked as read successfully');
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['conversations'] });
-      queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
-    },
-  });
-
   // Set up real-time subscription for messages
   useEffect(() => {
     if (!conversationId || !user) return;
@@ -148,18 +122,9 @@ export const useMessages = (conversationId: string | null) => {
     };
   }, [conversationId, queryClient, user]);
 
-  // Simple logic: mark messages as read when conversation is opened
-  useEffect(() => {
-    if (!conversationId || !user) return;
-    
-    console.log('Conversation opened, marking messages as read for:', conversationId);
-    markMessagesAsRead.mutate();
-  }, [conversationId, user?.id]);
-
   return {
     messages,
     isLoading,
     sendMessage,
-    markMessagesAsRead,
   };
 };

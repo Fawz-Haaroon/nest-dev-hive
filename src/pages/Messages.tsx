@@ -84,6 +84,34 @@ export default function Messages() {
     },
   });
 
+  // Simple unread count calculation - count messages that are not from current user and not read
+  const getUnreadCount = (conversation: any) => {
+    if (!conversation.messages || !user) return 0;
+    return conversation.messages.filter((msg: any) => 
+      msg.sender_id !== user.id && !msg.read
+    ).length;
+  };
+
+  // Mark messages as read when conversation is selected
+  const markConversationAsRead = useMutation({
+    mutationFn: async (conversationId: string) => {
+      if (!user) return;
+      
+      const { error } = await supabase
+        .from('messages')
+        .update({ read: true })
+        .eq('conversation_id', conversationId)
+        .neq('sender_id', user.id)
+        .eq('read', false);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['conversations'] });
+      queryClient.invalidateQueries({ queryKey: ['messages', selectedConversation] });
+    },
+  });
+
   // Enhanced search functionality
   const filteredConversations = conversations.filter(conversation => {
     if (!searchTerm) return true;
@@ -237,6 +265,13 @@ export default function Messages() {
     } catch (error) {
       console.error('Failed to delete conversation:', error);
     }
+  };
+
+  const handleSelectConversation = (conversationId: string) => {
+    setSelectedConversation(conversationId);
+    setShowMobileView(true);
+    // Mark messages as read when conversation is opened
+    markConversationAsRead.mutate(conversationId);
   };
 
   useEffect(() => {
@@ -428,67 +463,60 @@ export default function Messages() {
                       : conversation.participant_1_profile;
                     
                     const lastMessage = conversation.messages?.[conversation.messages.length - 1];
-                    const unreadCount = conversation.messages?.filter(m => !m.read && m.sender_id !== user.id).length || 0;
+                    const unreadCount = getUnreadCount(conversation);
                     const isOnline = isUserOnline(otherParticipant?.id || '');
 
                     return (
                       <div
                         key={conversation.id}
-                        className={`relative group p-4 hover:bg-cyan-500/10 transition-all duration-200 border-l-4 ${
+                        className={`relative group p-4 hover:bg-cyan-500/10 transition-all duration-200 border-l-4 cursor-pointer ${
                           selectedConversation === conversation.id
                             ? 'bg-cyan-950/30 border-cyan-400'
                             : 'border-transparent'
                         }`}
+                        onClick={() => handleSelectConversation(conversation.id)}
                       >
                         <div className="flex items-start gap-3">
-                          <button
-                            onClick={() => {
-                              setSelectedConversation(conversation.id);
-                              setShowMobileView(true);
-                            }}
-                            className="flex items-start gap-3 flex-1 text-left min-w-0"
-                          >
-                            <div className="relative flex-shrink-0">
-                              <Avatar className="w-12 h-12">
-                                <AvatarImage src={otherParticipant?.avatar_url || ''} />
-                                <AvatarFallback className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-semibold">
-                                  {otherParticipant?.full_name?.split(' ').map(n => n[0]).join('') || otherParticipant?.username[0]}
-                                </AvatarFallback>
-                              </Avatar>
-                              {isOnline && (
-                                <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-400 border-2 border-slate-900 rounded-full"></div>
+                          <div className="relative flex-shrink-0">
+                            <Avatar className="w-12 h-12">
+                              <AvatarImage src={otherParticipant?.avatar_url || ''} />
+                              <AvatarFallback className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-semibold">
+                                {otherParticipant?.full_name?.split(' ').map(n => n[0]).join('') || otherParticipant?.username[0]}
+                              </AvatarFallback>
+                            </Avatar>
+                            {isOnline && (
+                              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-400 border-2 border-slate-900 rounded-full"></div>
+                            )}
+                          </div>
+                          
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between mb-1">
+                              <h3 className="font-semibold text-white truncate">
+                                {(otherParticipant?.full_name || otherParticipant?.username || '').length > 20 
+                                  ? `${(otherParticipant?.full_name || otherParticipant?.username || '').substring(0, 20)}...`
+                                  : otherParticipant?.full_name || otherParticipant?.username}
+                              </h3>
+                              {lastMessage && (
+                                <span className="text-xs text-slate-400 flex-shrink-0 ml-2">
+                                  {format(new Date(lastMessage.created_at), 'HH:mm')}
+                                </span>
                               )}
                             </div>
                             
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center justify-between mb-1">
-                                <h3 className="font-semibold text-white truncate">
-                                  {(otherParticipant?.full_name || otherParticipant?.username || '').length > 20 
-                                    ? `${(otherParticipant?.full_name || otherParticipant?.username || '').substring(0, 20)}...`
-                                    : otherParticipant?.full_name || otherParticipant?.username}
-                                </h3>
-                                {lastMessage && (
-                                  <span className="text-xs text-slate-400 flex-shrink-0 ml-2">
-                                    {format(new Date(lastMessage.created_at), 'HH:mm')}
-                                  </span>
-                                )}
-                              </div>
-                              
-                              <div className="flex items-center justify-between">
-                                {lastMessage && (
-                                  <p className="text-sm text-slate-400 truncate">
-                                    {lastMessage.sender_id === user.id ? 'You: ' : ''}{lastMessage.content.length > 20 ? `${lastMessage.content.substring(0, 20)}...` : lastMessage.content}
-                                  </p>
-                                )}
-                              </div>
+                            <div className="flex items-center justify-between">
+                              {lastMessage && (
+                                <p className="text-sm text-slate-400 truncate">
+                                  {lastMessage.sender_id === user.id ? 'You: ' : ''}{lastMessage.content.length > 20 ? `${lastMessage.content.substring(0, 20)}...` : lastMessage.content}
+                                </p>
+                              )}
                             </div>
-                          </button>
+                          </div>
                           
                           <div className="flex flex-col items-center gap-1 flex-shrink-0">
                             {unreadCount > 0 && (
-                              <Badge className="bg-cyan-500 text-white text-xs h-5 w-5 rounded-full p-0 flex items-center justify-center">
-                                {unreadCount}
-                              </Badge>
+                              <div className="bg-green-500 text-white text-xs h-5 w-5 rounded-full flex items-center justify-center font-medium">
+                                {unreadCount > 9 ? '9+' : unreadCount}
+                              </div>
                             )}
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
@@ -496,13 +524,17 @@ export default function Messages() {
                                   variant="ghost"
                                   size="sm"
                                   className="opacity-0 group-hover:opacity-100 transition-opacity text-slate-400 hover:text-white h-6 w-6 p-0"
+                                  onClick={(e) => e.stopPropagation()}
                                 >
                                   <MoreHorizontal className="w-3 h-3" />
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end" className="bg-slate-800 border-slate-600">
                                 <DropdownMenuItem
-                                  onClick={() => handleDeleteConversation(conversation.id)}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeleteConversation(conversation.id);
+                                  }}
                                   className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
                                 >
                                   Delete Conversation
@@ -675,7 +707,7 @@ export default function Messages() {
                 </div>
               </div>
             ) : (
-              <div className="flex-1 flex items-center justify-center bg-gradient-to-b from-slate-900/30 to-slate-800/20">
+              <div className="h-full flex items-center justify-center bg-gradient-to-b from-slate-900/30 to-slate-800/20">
                 <div className="text-center">
                   <h3 className="text-xl font-semibold text-white mb-2">
                     Select a conversation
