@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -516,9 +515,9 @@ export default function Messages() {
           <ResizableHandle withHandle />
 
           {/* Main Chat Area */}
-          <ResizablePanel defaultSize={75} className={`${showMobileView ? 'block' : 'hidden'} lg:block flex flex-col bg-gradient-to-b from-slate-900/30 to-slate-800/20`}>
+          <ResizablePanel defaultSize={75} className={`${showMobileView ? 'block' : 'hidden'} lg:block`}>
             {selectedConversation ? (
-              <>
+              <div className="h-full flex flex-col bg-gradient-to-b from-slate-900/30 to-slate-800/20">
                 {/* Chat Header */}
                 <div className="p-4 border-b border-cyan-500/20 bg-slate-900/50 flex-shrink-0">
                   <div className="flex items-center gap-3">
@@ -569,105 +568,102 @@ export default function Messages() {
                   </div>
                 </div>
 
-                {/* Messages Container - Fixed height with scroll */}
-                <div className="flex-1 flex flex-col min-h-0">
-                  {/* Messages */}
-                  <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-gradient-to-b from-slate-900/20 to-slate-800/20">
-                    {messagesLoading ? (
-                      <div className="flex justify-center items-center h-full">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-400"></div>
+                {/* Messages Area - Take remaining space */}
+                <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                  {messagesLoading ? (
+                    <div className="flex justify-center items-center h-full">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-400"></div>
+                    </div>
+                  ) : messages.length === 0 ? (
+                    <div className="flex justify-center items-center h-full">
+                      <div className="text-center">
+                        <p className="text-cyan-300">Start a conversation!</p>
+                        <p className="text-slate-400 text-sm">Send your first message below</p>
                       </div>
-                    ) : messages.length === 0 ? (
-                      <div className="flex justify-center items-center h-full">
-                        <div className="text-center">
-                          <p className="text-cyan-300">Start a conversation!</p>
-                          <p className="text-slate-400 text-sm">Send your first message below</p>
-                        </div>
-                      </div>
-                    ) : (
-                      messages.map((message: MessageWithSender) => (
+                    </div>
+                  ) : (
+                    messages.map((message: MessageWithSender) => (
+                      <div
+                        key={message.id}
+                        className={`flex ${message.sender_id === user.id ? 'justify-end' : 'justify-start'}`}
+                      >
                         <div
-                          key={message.id}
-                          className={`flex ${message.sender_id === user.id ? 'justify-end' : 'justify-start'}`}
+                          className={`max-w-xs lg:max-w-md px-4 py-3 rounded-2xl ${
+                            message.sender_id === user.id
+                              ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white'
+                              : 'bg-slate-800/80 text-white border border-slate-700/50'
+                          }`}
                         >
-                          <div
-                            className={`max-w-xs lg:max-w-md px-4 py-3 rounded-2xl ${
-                              message.sender_id === user.id
-                                ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white'
-                                : 'bg-slate-800/80 text-white border border-slate-700/50'
-                            }`}
-                          >
-                            <p className="text-sm">{message.content}</p>
-                            {message.file_url && (
-                              <a 
-                                href={message.file_url} 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                className="block mt-2 text-sm underline hover:no-underline"
-                              >
-                                View attachment
-                              </a>
-                            )}
-                            <p className={`text-xs mt-1 ${
-                              message.sender_id === user.id ? 'text-cyan-100' : 'text-slate-400'
-                            }`}>
-                              {format(new Date(message.created_at), 'HH:mm')}
-                            </p>
-                          </div>
+                          <p className="text-sm">{message.content}</p>
+                          {message.file_url && (
+                            <a 
+                              href={message.file_url} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="block mt-2 text-sm underline hover:no-underline"
+                            >
+                              View attachment
+                            </a>
+                          )}
+                          <p className={`text-xs mt-1 ${
+                            message.sender_id === user.id ? 'text-cyan-100' : 'text-slate-400'
+                          }`}>
+                            {format(new Date(message.created_at), 'HH:mm')}
+                          </p>
                         </div>
-                      ))
-                    )}
-                    <div ref={messagesEndRef} />
-                  </div>
-
-                  {/* Message Input - Fixed at bottom */}
-                  <div className="p-4 border-t border-cyan-500/20 bg-slate-900/50 flex-shrink-0">
-                    <div className="flex items-end gap-3">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => fileInputRef.current?.click()}
-                        className="text-cyan-400 hover:bg-cyan-500/10 h-10 w-10 p-0 shrink-0"
-                      >
-                        <Paperclip className="w-4 h-4" />
-                      </Button>
-                      
-                      <div className="flex-1 relative">
-                        <Input
-                          type="text"
-                          placeholder="Type a message..."
-                          value={newMessage}
-                          onChange={(e) => setNewMessage(e.target.value)}
-                          onKeyPress={handleKeyPress}
-                          className="bg-slate-800/50 border-cyan-500/30 text-white placeholder:text-slate-400 focus:border-cyan-400"
-                        />
                       </div>
-                      
-                      <Button 
-                        onClick={handleSendMessage}
-                        disabled={!newMessage.trim() || sendMessage.isPending}
-                        className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white h-10 w-10 p-0 rounded-xl shrink-0"
-                      >
-                        {sendMessage.isPending ? (
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        ) : (
-                          <Send className="w-4 h-4" />
-                        )}
-                      </Button>
+                    ))
+                  )}
+                  <div ref={messagesEndRef} />
+                </div>
+
+                {/* Message Input - Fixed at bottom */}
+                <div className="p-4 border-t border-cyan-500/20 bg-slate-900/50 flex-shrink-0">
+                  <div className="flex items-end gap-3">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="text-cyan-400 hover:bg-cyan-500/10 h-10 w-10 p-0 shrink-0"
+                    >
+                      <Paperclip className="w-4 h-4" />
+                    </Button>
+                    
+                    <div className="flex-1 relative">
+                      <Input
+                        type="text"
+                        placeholder="Type a message..."
+                        value={newMessage}
+                        onChange={(e) => setNewMessage(e.target.value)}
+                        onKeyPress={handleKeyPress}
+                        className="bg-slate-800/50 border-cyan-500/30 text-white placeholder:text-slate-400 focus:border-cyan-400"
+                      />
                     </div>
                     
-                    <input
-                      type="file"
-                      ref={fileInputRef}
-                      onChange={handleFileUpload}
-                      className="hidden"
-                      accept="image/*,.pdf,.doc,.docx,.txt"
-                    />
+                    <Button 
+                      onClick={handleSendMessage}
+                      disabled={!newMessage.trim() || sendMessage.isPending}
+                      className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white h-10 w-10 p-0 rounded-xl shrink-0"
+                    >
+                      {sendMessage.isPending ? (
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      ) : (
+                        <Send className="w-4 h-4" />
+                      )}
+                    </Button>
                   </div>
+                  
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileUpload}
+                    className="hidden"
+                    accept="image/*,.pdf,.doc,.docx,.txt"
+                  />
                 </div>
-              </>
+              </div>
             ) : (
-              <div className="flex-1 flex items-center justify-center">
+              <div className="flex-1 flex items-center justify-center bg-gradient-to-b from-slate-900/30 to-slate-800/20">
                 <div className="text-center">
                   <h3 className="text-xl font-semibold text-white mb-2">
                     Select a conversation
