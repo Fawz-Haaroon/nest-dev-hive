@@ -139,34 +139,9 @@ export default function Messages() {
     try {
       console.log('Starting file upload:', file.name);
       
-      // First, ensure the messages bucket exists
-      const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
-      console.log('Available buckets:', buckets);
-      
-      if (bucketsError) {
-        console.error('Error listing buckets:', bucketsError);
-        throw bucketsError;
-      }
-
-      const messagesBucket = buckets?.find(bucket => bucket.name === 'messages');
-      if (!messagesBucket) {
-        console.log('Messages bucket not found, creating it...');
-        const { error: createBucketError } = await supabase.storage.createBucket('messages', {
-          public: true,
-          allowedMimeTypes: ['image/*', 'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'],
-          fileSizeLimit: 10485760 // 10MB
-        });
-        
-        if (createBucketError) {
-          console.error('Error creating bucket:', createBucketError);
-          throw createBucketError;
-        }
-        console.log('Messages bucket created successfully');
-      }
-
       const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
-      const filePath = `messages/${fileName}`;
+      const fileName = `${user?.id}/${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const filePath = fileName;
 
       console.log('Uploading file to path:', filePath);
 
