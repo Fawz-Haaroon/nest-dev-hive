@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Camera, Upload, Loader2 } from 'lucide-react';
+import { Camera, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUpdateProfile } from '@/hooks/useProfile';
 import { supabase } from '@/integrations/supabase/client';
@@ -38,6 +38,10 @@ export const ProfilePictureUpload = ({
         throw new Error('You must select an image to upload.');
       }
 
+      if (!user) {
+        throw new Error('You must be logged in to upload an avatar.');
+      }
+
       const file = event.target.files[0];
       
       // Validate file type
@@ -50,36 +54,65 @@ export const ProfilePictureUpload = ({
         throw new Error('File size must be less than 5MB.');
       }
 
-      if (!user) {
-        throw new Error('You must be logged in to upload an avatar.');
+      console.log('Starting upload for user:', user.id);
+      console.log('File details:', { name: file.name, type: file.type, size: file.size });
+
+      // Delete old avatar if it exists
+      if (currentAvatarUrl) {
+        try {
+          const oldPath = currentAvatarUrl.split('/').pop();
+          if (oldPath) {
+            console.log('Deleting old avatar:', oldPath);
+            await supabase.storage
+              .from('avatars')
+              .remove([`${user.id}/${oldPath}`]);
+          }
+        } catch (error) {
+          console.warn('Could not delete old avatar:', error);
+        }
       }
 
       const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}-${Math.random()}.${fileExt}`;
-      const filePath = `avatars/${fileName}`;
+      const fileName = `avatar-${Date.now()}.${fileExt}`;
+      const filePath = `${user.id}/${fileName}`;
+
+      console.log('Uploading to path:', filePath);
 
       const { error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload(filePath, file, { upsert: true });
+        .upload(filePath, file, { 
+          cacheControl: '3600',
+          upsert: false 
+        });
 
       if (uploadError) {
+        console.error('Upload error:', uploadError);
         throw uploadError;
       }
+
+      console.log('Upload successful, getting public URL');
 
       // Get the public URL
       const { data: { publicUrl } } = supabase.storage
         .from('avatars')
         .getPublicUrl(filePath);
 
+      console.log('Public URL:', publicUrl);
+
       // Update the user's profile with the new avatar URL
       await updateProfile.mutateAsync({
         avatar_url: publicUrl
       });
 
+      console.log('Profile updated successfully');
+
       toast({
         title: 'Success',
         description: 'Profile picture updated successfully!',
       });
+
+      // Reset the input
+      event.target.value = '';
 
     } catch (error) {
       console.error('Error uploading avatar:', error);
@@ -100,7 +133,11 @@ export const ProfilePictureUpload = ({
   return (
     <div className="relative group">
       <Avatar className={`${sizeClasses[size]} border-2 border-blue-200 dark:border-blue-800`}>
-        <AvatarImage src={currentAvatarUrl || "/placeholder.svg"} />
+        <AvatarImage 
+          src={currentAvatarUrl} 
+          alt="Profile picture"
+          className="object-cover"
+        />
         <AvatarFallback className="bg-gradient-to-r from-blue-500 to-purple-500 text-white font-medium">
           {initials}
         </AvatarFallback>
@@ -129,7 +166,7 @@ export const ProfilePictureUpload = ({
       <input
         id="avatar-upload"
         type="file"
-        accept="image/*"
+        accept="image/jpeg,image/png,image/gif,image/webp"
         onChange={uploadAvatar}
         disabled={uploading}
         className="hidden"
