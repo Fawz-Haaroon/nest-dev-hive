@@ -36,17 +36,21 @@ export const useMessages = (conversationId: string | null) => {
   });
 
   const sendMessage = useMutation({
-    mutationFn: async ({ content }: { content: string }) => {
+    mutationFn: async ({ content, fileUrl, fileName }: { content?: string; fileUrl?: string; fileName?: string }) => {
       if (!user || !conversationId) throw new Error('Not authenticated or no conversation');
       
-      console.log('Sending message:', { content, conversationId, senderId: user.id });
+      const messageContent = content || (fileName ? `📎 ${fileName}` : '');
+      if (!messageContent && !fileUrl) throw new Error('Message content or file required');
+      
+      console.log('Sending message:', { content: messageContent, conversationId, senderId: user.id, fileUrl });
       
       const { data, error } = await supabase
         .from('messages')
         .insert({
           conversation_id: conversationId,
           sender_id: user.id,
-          content
+          content: messageContent,
+          file_url: fileUrl
         })
         .select()
         .single();
@@ -74,20 +78,24 @@ export const useMessages = (conversationId: string | null) => {
     },
   });
 
-  const markAsRead = useMutation({
-    mutationFn: async (messageId: string) => {
-      if (!user) throw new Error('Not authenticated');
+  const markMessagesAsRead = useMutation({
+    mutationFn: async () => {
+      if (!user || !conversationId) throw new Error('Not authenticated');
       
       const { error } = await supabase
         .from('messages')
         .update({ read: true })
-        .eq('id', messageId)
-        .neq('sender_id', user.id);
+        .eq('conversation_id', conversationId)
+        .neq('sender_id', user.id)
+        .eq('read', false);
 
       if (error) {
-        console.error('Error marking message as read:', error);
+        console.error('Error marking messages as read:', error);
         throw error;
       }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['conversations'] });
     },
   });
 
@@ -110,6 +118,7 @@ export const useMessages = (conversationId: string | null) => {
         (payload) => {
           console.log('Real-time message received:', payload);
           queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
+          queryClient.invalidateQueries({ queryKey: ['conversations'] });
         }
       )
       .on(
@@ -123,6 +132,7 @@ export const useMessages = (conversationId: string | null) => {
         (payload) => {
           console.log('Real-time message updated:', payload);
           queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
+          queryClient.invalidateQueries({ queryKey: ['conversations'] });
         }
       )
       .subscribe();
@@ -133,10 +143,20 @@ export const useMessages = (conversationId: string | null) => {
     };
   }, [conversationId, queryClient, user]);
 
+  // Auto-mark messages as read when viewing them
+  useEffect(() => {
+    if (conversationId && messages.length > 0 && user) {
+      const unreadMessages = messages.filter(m => !m.read && m.sender_id !== user.id);
+      if (unreadMessages.length > 0) {
+        markMessagesAsRead.mutate();
+      }
+    }
+  }, [conversationId, messages, user?.id]);
+
   return {
     messages,
     isLoading,
     sendMessage,
-    markAsRead,
+    markMessagesAsRead,
   };
 };

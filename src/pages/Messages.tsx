@@ -4,17 +4,19 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Search, Send, ArrowLeft, UserPlus, Users, Check, X } from 'lucide-react';
+import { Search, Send, ArrowLeft, UserPlus, Users, Check, X, MoreHorizontal, MessageCircle, Paperclip } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useConversations } from '@/hooks/useConversations';
 import { useMessages } from '@/hooks/useMessages';
 import { useFriends } from '@/hooks/useFriends';
+import { useUserPresence } from '@/hooks/useUserPresence';
 import { FriendRequestModal } from '@/components/FriendRequestModal';
 import { format } from 'date-fns';
 import { Navbar } from '@/components/Navbar';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 export default function Messages() {
   const { user } = useAuth();
@@ -25,18 +27,22 @@ export default function Messages() {
   const [showFriendRequests, setShowFriendRequests] = useState(false);
   const [showAddFriend, setShowAddFriend] = useState(false);
   const [showMobileView, setShowMobileView] = useState(false);
+  const [showFriendsView, setShowFriendsView] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { conversations, isLoading: conversationsLoading, createConversation } = useConversations();
-  const { messages, isLoading: messagesLoading, sendMessage, markAsRead } = useMessages(selectedConversation);
+  const { messages, isLoading: messagesLoading, sendMessage } = useMessages(selectedConversation);
   const { friends, pendingRequests, isLoading: friendsLoading, respondToFriendRequest } = useFriends();
+  const { isUserOnline } = useUserPresence();
 
   console.log('Messages component state:', {
     user: user?.id,
     selectedConversation,
     conversationsCount: conversations.length,
     messagesCount: messages.length,
-    friendsCount: friends.length
+    friendsCount: friends.length,
+    showFriendsView
   });
 
   const selectedConversationData = conversations.find(c => c.id === selectedConversation);
@@ -109,6 +115,49 @@ export default function Messages() {
     }
   };
 
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !selectedConversation) return;
+
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+      const filePath = `messages/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('messages')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data } = supabase.storage
+        .from('messages')
+        .getPublicUrl(filePath);
+
+      await sendMessage.mutateAsync({ 
+        content: `📎 ${file.name}`,
+        fileUrl: data.publicUrl,
+        fileName: file.name 
+      });
+
+      toast({
+        title: "File sent",
+        description: "Your file has been sent successfully.",
+      });
+    } catch (error) {
+      console.error('Failed to upload file:', error);
+      toast({
+        title: "Error",
+        description: "Failed to upload file. Please try again.",
+        variant: "destructive",
+      });
+    }
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -123,6 +172,7 @@ export default function Messages() {
       console.log('Conversation created/found:', conversationId);
       setSelectedConversation(conversationId);
       setShowMobileView(true);
+      setShowFriendsView(false);
       toast({
         title: "Success",
         description: "Conversation started successfully!",
@@ -164,15 +214,6 @@ export default function Messages() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
-
-  useEffect(() => {
-    if (selectedConversation && messages.length > 0) {
-      const unreadMessages = messages.filter(m => !m.read && m.sender_id !== user?.id);
-      unreadMessages.forEach(message => {
-        markAsRead.mutate(message.id);
-      });
-    }
-  }, [selectedConversation, messages, user?.id, markAsRead]);
 
   if (!user) {
     return (
@@ -229,12 +270,32 @@ export default function Messages() {
                 </div>
               </div>
               
+              {/* Tab buttons */}
+              <div className="flex gap-1 mb-4">
+                <Button
+                  variant={!showFriendsView ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setShowFriendsView(false)}
+                  className={!showFriendsView ? "bg-cyan-500 text-white" : "text-cyan-400 hover:bg-cyan-500/10"}
+                >
+                  Conversations
+                </Button>
+                <Button
+                  variant={showFriendsView ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setShowFriendsView(true)}
+                  className={showFriendsView ? "bg-cyan-500 text-white" : "text-cyan-400 hover:bg-cyan-500/10"}
+                >
+                  Friends
+                </Button>
+              </div>
+              
               {/* Search */}
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-cyan-400 h-4 w-4" />
                 <Input
                   type="text"
-                  placeholder="Search conversations..."
+                  placeholder={showFriendsView ? "Search friends..." : "Search conversations..."}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10 bg-slate-800/50 border-cyan-500/30 text-white placeholder:text-slate-400 focus:border-cyan-400"
@@ -285,109 +346,148 @@ export default function Messages() {
 
             {/* Content */}
             <div className="flex-1 overflow-y-auto">
-              {/* Show conversations first, then friends */}
-              {filteredConversations.length > 0 && (
-                <div className="border-b border-cyan-500/20">
-                  <div className="p-4">
-                    <h3 className="font-semibold text-sm text-cyan-300 mb-3">Conversations</h3>
-                  </div>
-                  {filteredConversations.map((conversation) => {
-                    const otherParticipant = conversation.participant_1 === user?.id 
-                      ? conversation.participant_2_profile 
-                      : conversation.participant_1_profile;
-                    
-                    const lastMessage = conversation.messages?.[conversation.messages.length - 1];
-                    const unreadCount = conversation.messages?.filter(m => !m.read && m.sender_id !== user.id).length || 0;
-
-                    return (
-                      <button
-                        key={conversation.id}
-                        onClick={() => {
-                          setSelectedConversation(conversation.id);
-                          setShowMobileView(true);
-                        }}
-                        className={`w-full p-4 text-left hover:bg-cyan-500/10 transition-all duration-200 border-l-4 ${
-                          selectedConversation === conversation.id
-                            ? 'bg-cyan-950/30 border-cyan-400'
-                            : 'border-transparent'
-                        }`}
-                      >
-                        <div className="flex items-start gap-3">
-                          <Avatar className="w-12 h-12">
-                            <AvatarImage src={otherParticipant?.avatar_url || ''} />
-                            <AvatarFallback className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-semibold">
-                              {otherParticipant?.full_name?.split(' ').map(n => n[0]).join('') || otherParticipant?.username[0]}
-                            </AvatarFallback>
-                          </Avatar>
-                          
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between mb-1">
-                              <h3 className="font-semibold text-white truncate">
-                                {otherParticipant?.full_name || otherParticipant?.username}
-                              </h3>
-                              {lastMessage && (
-                                <span className="text-xs text-slate-400">
-                                  {format(new Date(lastMessage.created_at), 'HH:mm')}
-                                </span>
-                              )}
-                            </div>
-                            
-                            <div className="flex items-center justify-between">
-                              {lastMessage && (
-                                <p className="text-sm text-slate-400 truncate">
-                                  {lastMessage.sender_id === user.id ? 'You: ' : ''}{lastMessage.content}
-                                </p>
-                              )}
-                              {unreadCount > 0 && (
-                                <Badge className="bg-cyan-500 text-white text-xs h-5 w-5 rounded-full p-0 flex items-center justify-center ml-2">
-                                  {unreadCount}
-                                </Badge>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-
-              {/* Show filtered friends when searching OR when no conversations exist */}
-              {((searchTerm && filteredFriends.length > 0) || (!searchTerm && filteredConversations.length === 0 && filteredFriends.length > 0)) && (
+              {showFriendsView ? (
+                // Friends View
                 <div className="p-4">
-                  <h3 className="font-semibold text-sm text-cyan-300 mb-3">Friends</h3>
+                  <h3 className="font-semibold text-sm text-cyan-300 mb-3">All Friends</h3>
                   {filteredFriends.map((friend) => {
                     const friendProfile = friend.user_id === user.id ? friend.friend_profile : friend.user_profile;
+                    const isOnline = isUserOnline(friendProfile.id);
+                    
                     return (
-                      <button
+                      <div
                         key={friend.id}
-                        onClick={() => {
-                          handleStartConversation(friendProfile.id);
-                        }}
-                        className="w-full p-3 text-left hover:bg-cyan-500/10 transition-all duration-200 rounded-lg"
-                        disabled={createConversation.isPending}
+                        className="p-3 hover:bg-cyan-500/10 transition-all duration-200 rounded-lg mb-2"
                       >
                         <div className="flex items-center gap-3">
-                          <Avatar className="w-10 h-10">
-                            <AvatarImage src={friendProfile.avatar_url || ''} />
-                            <AvatarFallback className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-semibold">
-                              {friendProfile.full_name?.split(' ').map(n => n[0]).join('') || friendProfile.username[0]}
-                            </AvatarFallback>
-                          </Avatar>
+                          <div className="relative">
+                            <Avatar className="w-10 h-10">
+                              <AvatarImage src={friendProfile.avatar_url || ''} />
+                              <AvatarFallback className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-semibold">
+                                {friendProfile.full_name?.split(' ').map(n => n[0]).join('') || friendProfile.username[0]}
+                              </AvatarFallback>
+                            </Avatar>
+                            {isOnline && (
+                              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-400 border-2 border-slate-900 rounded-full"></div>
+                            )}
+                          </div>
                           <div className="flex-1">
                             <h3 className="font-semibold text-white">
                               {friendProfile.full_name || friendProfile.username}
                             </h3>
                             <p className="text-sm text-slate-400">@{friendProfile.username}</p>
                           </div>
-                          {createConversation.isPending && (
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-cyan-400"></div>
-                          )}
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-cyan-400 hover:bg-cyan-500/20"
+                            onClick={() => handleStartConversation(friendProfile.id)}
+                            disabled={createConversation.isPending}
+                          >
+                            <MessageCircle className="w-4 h-4" />
+                          </Button>
                         </div>
-                      </button>
+                      </div>
                     );
                   })}
                 </div>
+              ) : (
+                // Conversations View
+                filteredConversations.length > 0 ? (
+                  filteredConversations.map((conversation) => {
+                    const otherParticipant = conversation.participant_1 === user?.id 
+                      ? conversation.participant_2_profile 
+                      : conversation.participant_1_profile;
+                    
+                    const lastMessage = conversation.messages?.[conversation.messages.length - 1];
+                    const unreadCount = conversation.messages?.filter(m => !m.read && m.sender_id !== user.id).length || 0;
+                    const isOnline = isUserOnline(otherParticipant?.id || '');
+
+                    return (
+                      <div
+                        key={conversation.id}
+                        className={`relative group p-4 hover:bg-cyan-500/10 transition-all duration-200 border-l-4 ${
+                          selectedConversation === conversation.id
+                            ? 'bg-cyan-950/30 border-cyan-400'
+                            : 'border-transparent'
+                        }`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <button
+                            onClick={() => {
+                              setSelectedConversation(conversation.id);
+                              setShowMobileView(true);
+                            }}
+                            className="flex items-start gap-3 flex-1 text-left"
+                          >
+                            <div className="relative">
+                              <Avatar className="w-12 h-12">
+                                <AvatarImage src={otherParticipant?.avatar_url || ''} />
+                                <AvatarFallback className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-semibold">
+                                  {otherParticipant?.full_name?.split(' ').map(n => n[0]).join('') || otherParticipant?.username[0]}
+                                </AvatarFallback>
+                              </Avatar>
+                              {isOnline && (
+                                <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-400 border-2 border-slate-900 rounded-full"></div>
+                              )}
+                            </div>
+                            
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between mb-1">
+                                <h3 className="font-semibold text-white truncate">
+                                  {otherParticipant?.full_name || otherParticipant?.username}
+                                </h3>
+                                {lastMessage && (
+                                  <span className="text-xs text-slate-400">
+                                    {format(new Date(lastMessage.created_at), 'HH:mm')}
+                                  </span>
+                                )}
+                              </div>
+                              
+                              <div className="flex items-center justify-between">
+                                {lastMessage && (
+                                  <p className="text-sm text-slate-400 truncate">
+                                    {lastMessage.sender_id === user.id ? 'You: ' : ''}{lastMessage.content}
+                                  </p>
+                                )}
+                                {unreadCount > 0 && (
+                                  <Badge className="bg-cyan-500 text-white text-xs h-5 w-5 rounded-full p-0 flex items-center justify-center ml-2">
+                                    {unreadCount}
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+                          </button>
+                          
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="opacity-0 group-hover:opacity-100 transition-opacity text-slate-400 hover:text-white h-8 w-8 p-0"
+                              >
+                                <MoreHorizontal className="w-4 h-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="bg-slate-800 border-slate-600">
+                              <DropdownMenuItem
+                                onClick={() => handleDeleteConversation(conversation.id)}
+                                className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                              >
+                                Delete Conversation
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="p-4 text-center">
+                    <p className="text-slate-400">No conversations yet</p>
+                    <p className="text-sm text-slate-500">Start messaging your friends!</p>
+                  </div>
+                )
               )}
             </div>
           </div>
@@ -408,19 +508,26 @@ export default function Messages() {
                       <ArrowLeft className="w-4 h-4" />
                     </Button>
                     
-                    <Avatar className="w-10 h-10">
-                      <AvatarImage src={selectedConversationData?.participant_1 === user?.id 
-                        ? selectedConversationData?.participant_2_profile?.avatar_url 
-                        : selectedConversationData?.participant_1_profile?.avatar_url} />
-                      <AvatarFallback className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-semibold">
-                        {(selectedConversationData?.participant_1 === user?.id 
-                          ? selectedConversationData?.participant_2_profile?.full_name 
-                          : selectedConversationData?.participant_1_profile?.full_name)?.split(' ').map(n => n[0]).join('') || 
-                         (selectedConversationData?.participant_1 === user?.id 
-                          ? selectedConversationData?.participant_2_profile?.username 
-                          : selectedConversationData?.participant_1_profile?.username)?.[0]}
-                      </AvatarFallback>
-                    </Avatar>
+                    <div className="relative">
+                      <Avatar className="w-10 h-10">
+                        <AvatarImage src={selectedConversationData?.participant_1 === user?.id 
+                          ? selectedConversationData?.participant_2_profile?.avatar_url 
+                          : selectedConversationData?.participant_1_profile?.avatar_url} />
+                        <AvatarFallback className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-semibold">
+                          {(selectedConversationData?.participant_1 === user?.id 
+                            ? selectedConversationData?.participant_2_profile?.full_name 
+                            : selectedConversationData?.participant_1_profile?.full_name)?.split(' ').map(n => n[0]).join('') || 
+                           (selectedConversationData?.participant_1 === user?.id 
+                            ? selectedConversationData?.participant_2_profile?.username 
+                            : selectedConversationData?.participant_1_profile?.username)?.[0]}
+                        </AvatarFallback>
+                      </Avatar>
+                      {isUserOnline(selectedConversationData?.participant_1 === user?.id 
+                        ? selectedConversationData?.participant_2_profile?.id || ''
+                        : selectedConversationData?.participant_1_profile?.id || '') && (
+                        <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-400 border-2 border-slate-900 rounded-full"></div>
+                      )}
+                    </div>
                     
                     <div>
                       <h2 className="font-semibold text-white">
@@ -428,7 +535,13 @@ export default function Messages() {
                           ? selectedConversationData?.participant_2_profile?.full_name || selectedConversationData?.participant_2_profile?.username
                           : selectedConversationData?.participant_1_profile?.full_name || selectedConversationData?.participant_1_profile?.username}
                       </h2>
-                      <p className="text-sm text-green-400">Online</p>
+                      <p className={`text-sm ${isUserOnline(selectedConversationData?.participant_1 === user?.id 
+                        ? selectedConversationData?.participant_2_profile?.id || ''
+                        : selectedConversationData?.participant_1_profile?.id || '') ? 'text-green-400' : 'text-slate-400'}`}>
+                        {isUserOnline(selectedConversationData?.participant_1 === user?.id 
+                          ? selectedConversationData?.participant_2_profile?.id || ''
+                          : selectedConversationData?.participant_1_profile?.id || '') ? 'Online' : 'Offline'}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -460,6 +573,16 @@ export default function Messages() {
                           }`}
                         >
                           <p className="text-sm">{message.content}</p>
+                          {message.file_url && (
+                            <a 
+                              href={message.file_url} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="block mt-2 text-sm underline hover:no-underline"
+                            >
+                              View attachment
+                            </a>
+                          )}
                           <p className={`text-xs mt-1 ${
                             message.sender_id === user.id ? 'text-cyan-100' : 'text-slate-400'
                           }`}>
@@ -472,9 +595,18 @@ export default function Messages() {
                   <div ref={messagesEndRef} />
                 </div>
 
-                {/* Message Input */}
-                <div className="p-4 border-t border-cyan-500/20 bg-slate-900/50">
+                {/* Message Input - Fixed at bottom */}
+                <div className="p-4 border-t border-cyan-500/20 bg-slate-900/50 sticky bottom-0">
                   <div className="flex items-end gap-3">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="text-cyan-400 hover:bg-cyan-500/10 h-10 w-10 p-0 shrink-0"
+                    >
+                      <Paperclip className="w-4 h-4" />
+                    </Button>
+                    
                     <div className="flex-1 relative">
                       <Input
                         type="text"
@@ -498,6 +630,14 @@ export default function Messages() {
                       )}
                     </Button>
                   </div>
+                  
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileUpload}
+                    className="hidden"
+                    accept="image/*,.pdf,.doc,.docx,.txt"
+                  />
                 </div>
               </>
             ) : (
