@@ -50,7 +50,8 @@ export const useMessages = (conversationId: string | null) => {
           conversation_id: conversationId,
           sender_id: user.id,
           content: messageContent,
-          file_url: fileUrl
+          file_url: fileUrl,
+          read: false
         })
         .select()
         .single();

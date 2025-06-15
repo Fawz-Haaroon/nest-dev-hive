@@ -84,18 +84,24 @@ export default function Messages() {
     },
   });
 
-  // Simple unread count calculation - count messages that are not from current user and not read
+  // Simple unread count calculation for each conversation
   const getUnreadCount = (conversation: any) => {
     if (!conversation.messages || !user) return 0;
-    return conversation.messages.filter((msg: any) => 
+    
+    const unreadMessages = conversation.messages.filter((msg: any) => 
       msg.sender_id !== user.id && !msg.read
-    ).length;
+    );
+    
+    console.log(`Conversation ${conversation.id} unread count:`, unreadMessages.length);
+    return unreadMessages.length;
   };
 
   // Mark messages as read when conversation is selected
-  const markConversationAsRead = useMutation({
+  const markMessagesAsRead = useMutation({
     mutationFn: async (conversationId: string) => {
       if (!user) return;
+      
+      console.log('Marking messages as read for conversation:', conversationId);
       
       const { error } = await supabase
         .from('messages')
@@ -104,7 +110,12 @@ export default function Messages() {
         .neq('sender_id', user.id)
         .eq('read', false);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error marking messages as read:', error);
+        throw error;
+      }
+      
+      console.log('Messages marked as read successfully');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
@@ -268,10 +279,12 @@ export default function Messages() {
   };
 
   const handleSelectConversation = (conversationId: string) => {
+    console.log('Selecting conversation:', conversationId);
     setSelectedConversation(conversationId);
     setShowMobileView(true);
+    
     // Mark messages as read when conversation is opened
-    markConversationAsRead.mutate(conversationId);
+    markMessagesAsRead.mutate(conversationId);
   };
 
   useEffect(() => {
@@ -514,7 +527,7 @@ export default function Messages() {
                           
                           <div className="flex flex-col items-center gap-1 flex-shrink-0">
                             {unreadCount > 0 && (
-                              <div className="bg-green-500 text-white text-xs h-5 w-5 rounded-full flex items-center justify-center font-medium">
+                              <div className="bg-blue-500 text-white text-xs h-5 w-5 rounded-full flex items-center justify-center font-medium">
                                 {unreadCount > 9 ? '9+' : unreadCount}
                               </div>
                             )}
@@ -709,6 +722,7 @@ export default function Messages() {
             ) : (
               <div className="h-full flex items-center justify-center bg-gradient-to-b from-slate-900/30 to-slate-800/20">
                 <div className="text-center">
+                  <MessageCircle className="w-16 h-16 text-cyan-400 mx-auto mb-4" />
                   <h3 className="text-xl font-semibold text-white mb-2">
                     Select a conversation
                   </h3>
