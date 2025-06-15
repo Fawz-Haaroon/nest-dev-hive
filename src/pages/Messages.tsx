@@ -18,6 +18,22 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
+interface MessageWithSender {
+  id: string;
+  content: string;
+  conversation_id: string;
+  sender_id: string;
+  created_at: string;
+  read: boolean;
+  file_url?: string;
+  sender: {
+    id: string;
+    username: string;
+    full_name: string;
+    avatar_url: string;
+  };
+}
+
 export default function Messages() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -560,7 +576,7 @@ export default function Messages() {
                       </div>
                     </div>
                   ) : (
-                    messages.map((message) => (
+                    messages.map((message: MessageWithSender) => (
                       <div
                         key={message.id}
                         className={`flex ${message.sender_id === user.id ? 'justify-end' : 'justify-start'}`}

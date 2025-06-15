@@ -95,6 +95,7 @@ export type Database = {
           content: string
           conversation_id: string
           created_at: string | null
+          file_url: string | null
           id: string
           read: boolean | null
           sender_id: string
@@ -103,6 +104,7 @@ export type Database = {
           content: string
           conversation_id: string
           created_at?: string | null
+          file_url?: string | null
           id?: string
           read?: boolean | null
           sender_id: string
@@ -111,6 +113,7 @@ export type Database = {
           content?: string
           conversation_id?: string
           created_at?: string | null
+          file_url?: string | null
           id?: string
           read?: boolean | null
           sender_id?: string
