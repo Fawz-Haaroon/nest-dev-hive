@@ -36,12 +36,7 @@ export const useMessages = (conversationId: string | null) => {
   });
 
   const sendMessage = useMutation({
-    mutationFn: async ({ content, replyTo, fileUrl, messageType = 'text' }: { 
-      content: string; 
-      replyTo?: string; 
-      fileUrl?: string;
-      messageType?: 'text' | 'image' | 'video' | 'audio' | 'file';
-    }) => {
+    mutationFn: async ({ content }: { content: string }) => {
       if (!user || !conversationId) throw new Error('Not authenticated or no conversation');
       
       console.log('Sending message:', { content, conversationId, senderId: user.id });
@@ -51,10 +46,7 @@ export const useMessages = (conversationId: string | null) => {
         .insert({
           conversation_id: conversationId,
           sender_id: user.id,
-          content,
-          reply_to: replyTo || null,
-          message_type: messageType,
-          file_url: fileUrl || null
+          content
         })
         .select()
         .single();
@@ -80,9 +72,6 @@ export const useMessages = (conversationId: string | null) => {
       queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
     },
-    onError: (error) => {
-      console.error('Message sending failed:', error);
-    }
   });
 
   const markAsRead = useMutation({
@@ -136,9 +125,7 @@ export const useMessages = (conversationId: string | null) => {
           queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
         }
       )
-      .subscribe((status) => {
-        console.log('Real-time subscription status:', status);
-      });
+      .subscribe();
 
     return () => {
       console.log('Cleaning up real-time subscription');

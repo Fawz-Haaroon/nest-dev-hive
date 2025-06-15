@@ -4,29 +4,20 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Search, Send, MoreVertical, Phone, Video, Info, Paperclip, Smile, MessageCircle, UserPlus, Users, Check, X, ArrowLeft, Trash2 } from 'lucide-react';
+import { Search, Send, ArrowLeft, UserPlus, Users, Check, X } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useConversations } from '@/hooks/useConversations';
 import { useMessages } from '@/hooks/useMessages';
 import { useFriends } from '@/hooks/useFriends';
-import { useCalls } from '@/hooks/useCalls';
 import { FriendRequestModal } from '@/components/FriendRequestModal';
 import { format } from 'date-fns';
 import { Navbar } from '@/components/Navbar';
-import { useNavigate } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 
 export default function Messages() {
   const { user } = useAuth();
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
   const [newMessage, setNewMessage] = useState('');
@@ -35,12 +26,10 @@ export default function Messages() {
   const [showAddFriend, setShowAddFriend] = useState(false);
   const [showMobileView, setShowMobileView] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { conversations, isLoading: conversationsLoading, createConversation } = useConversations();
   const { messages, isLoading: messagesLoading, sendMessage, markAsRead } = useMessages(selectedConversation);
   const { friends, pendingRequests, isLoading: friendsLoading, respondToFriendRequest } = useFriends();
-  const { initiateCall } = useCalls();
 
   console.log('Messages component state:', {
     user: user?.id,
@@ -148,24 +137,6 @@ export default function Messages() {
     }
   };
 
-  const handleCall = async (type: 'voice' | 'video') => {
-    if (selectedConversation) {
-      try {
-        await initiateCall.mutateAsync({
-          conversationId: selectedConversation,
-          callType: type
-        });
-      } catch (error) {
-        console.error('Failed to initiate call:', error);
-        toast({
-          title: "Error",
-          description: "Failed to start call. Please try again.",
-          variant: "destructive",
-        });
-      }
-    }
-  };
-
   const handleAcceptFriendRequest = async (requestId: string) => {
     try {
       await respondToFriendRequest.mutateAsync({ friendshipId: requestId, status: 'accepted' });
@@ -179,31 +150,6 @@ export default function Messages() {
       await respondToFriendRequest.mutateAsync({ friendshipId: requestId, status: 'blocked' });
     } catch (error) {
       console.error('Failed to reject friend request:', error);
-    }
-  };
-
-  const handleFileAttachment = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
-    if (files && files.length > 0 && selectedConversation) {
-      const file = files[0];
-      
-      try {
-        await sendMessage.mutateAsync({ 
-          content: `📎 Shared file: ${file.name}`,
-          messageType: file.type.startsWith('image/') ? 'image' : 'file'
-        });
-      } catch (error) {
-        console.error('Failed to send file:', error);
-        toast({
-          title: "Error",
-          description: "Failed to send file. Please try again.",
-          variant: "destructive",
-        });
-      }
     }
   };
 
@@ -234,7 +180,6 @@ export default function Messages() {
         <Navbar />
         <div className="pt-20 flex items-center justify-center h-screen">
           <div className="text-center">
-            <MessageCircle className="w-16 h-16 mx-auto mb-4 text-slate-400" />
             <h2 className="text-2xl font-bold text-white mb-2">
               Sign in to view messages
             </h2>
@@ -355,78 +300,53 @@ export default function Messages() {
                     const unreadCount = conversation.messages?.filter(m => !m.read && m.sender_id !== user.id).length || 0;
 
                     return (
-                      <div
+                      <button
                         key={conversation.id}
-                        className={`flex items-center group hover:bg-cyan-500/10 transition-all duration-200 border-l-4 ${
+                        onClick={() => {
+                          setSelectedConversation(conversation.id);
+                          setShowMobileView(true);
+                        }}
+                        className={`w-full p-4 text-left hover:bg-cyan-500/10 transition-all duration-200 border-l-4 ${
                           selectedConversation === conversation.id
                             ? 'bg-cyan-950/30 border-cyan-400'
                             : 'border-transparent'
                         }`}
                       >
-                        <button
-                          onClick={() => {
-                            setSelectedConversation(conversation.id);
-                            setShowMobileView(true);
-                          }}
-                          className="flex-1 p-4 text-left"
-                        >
-                          <div className="flex items-start gap-3">
-                            <Avatar className="w-12 h-12">
-                              <AvatarImage src={otherParticipant?.avatar_url || ''} />
-                              <AvatarFallback className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-semibold">
-                                {otherParticipant?.full_name?.split(' ').map(n => n[0]).join('') || otherParticipant?.username[0]}
-                              </AvatarFallback>
-                            </Avatar>
+                        <div className="flex items-start gap-3">
+                          <Avatar className="w-12 h-12">
+                            <AvatarImage src={otherParticipant?.avatar_url || ''} />
+                            <AvatarFallback className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-semibold">
+                              {otherParticipant?.full_name?.split(' ').map(n => n[0]).join('') || otherParticipant?.username[0]}
+                            </AvatarFallback>
+                          </Avatar>
+                          
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between mb-1">
+                              <h3 className="font-semibold text-white truncate">
+                                {otherParticipant?.full_name || otherParticipant?.username}
+                              </h3>
+                              {lastMessage && (
+                                <span className="text-xs text-slate-400">
+                                  {format(new Date(lastMessage.created_at), 'HH:mm')}
+                                </span>
+                              )}
+                            </div>
                             
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center justify-between mb-1">
-                                <h3 className="font-semibold text-white truncate">
-                                  {otherParticipant?.full_name || otherParticipant?.username}
-                                </h3>
-                                {lastMessage && (
-                                  <span className="text-xs text-slate-400">
-                                    {format(new Date(lastMessage.created_at), 'HH:mm')}
-                                  </span>
-                                )}
-                              </div>
-                              
-                              <div className="flex items-center justify-between">
-                                {lastMessage && (
-                                  <p className="text-sm text-slate-400 truncate">
-                                    {lastMessage.sender_id === user.id ? 'You: ' : ''}{lastMessage.content}
-                                  </p>
-                                )}
-                                {unreadCount > 0 && (
-                                  <Badge className="bg-cyan-500 text-white text-xs h-5 w-5 rounded-full p-0 flex items-center justify-center ml-2">
-                                    {unreadCount}
-                                  </Badge>
-                                )}
-                              </div>
+                            <div className="flex items-center justify-between">
+                              {lastMessage && (
+                                <p className="text-sm text-slate-400 truncate">
+                                  {lastMessage.sender_id === user.id ? 'You: ' : ''}{lastMessage.content}
+                                </p>
+                              )}
+                              {unreadCount > 0 && (
+                                <Badge className="bg-cyan-500 text-white text-xs h-5 w-5 rounded-full p-0 flex items-center justify-center ml-2">
+                                  {unreadCount}
+                                </Badge>
+                              )}
                             </div>
                           </div>
-                        </button>
-                        
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="opacity-0 group-hover:opacity-100 mr-2 h-8 w-8 p-0 text-slate-400 hover:text-red-400"
-                            >
-                              <MoreVertical className="w-4 h-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="bg-slate-800 border-slate-700">
-                            <DropdownMenuItem
-                              onClick={() => handleDeleteConversation(conversation.id)}
-                              className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
-                            >
-                              <Trash2 className="w-4 h-4 mr-2" />
-                              Delete Conversation
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
+                        </div>
+                      </button>
                     );
                   })}
                 </div>
@@ -469,15 +389,6 @@ export default function Messages() {
                   })}
                 </div>
               )}
-
-              {/* No content state */}
-              {filteredConversations.length === 0 && filteredFriends.length === 0 && (
-                <div className="p-4 text-center">
-                  <MessageCircle className="w-12 h-12 mx-auto mb-4 text-slate-400" />
-                  <p className="text-slate-400">No conversations or friends found</p>
-                  <p className="text-sm text-slate-500">Add friends to start messaging</p>
-                </div>
-              )}
             </div>
           </div>
 
@@ -487,77 +398,37 @@ export default function Messages() {
               <>
                 {/* Chat Header */}
                 <div className="p-4 border-b border-cyan-500/20 bg-slate-900/50">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="lg:hidden text-cyan-400"
-                        onClick={() => setShowMobileView(false)}
-                      >
-                        <ArrowLeft className="w-4 h-4" />
-                      </Button>
-                      
-                      <Avatar className="w-10 h-10">
-                        <AvatarImage src={selectedConversationData?.participant_1 === user?.id 
-                          ? selectedConversationData?.participant_2_profile?.avatar_url 
-                          : selectedConversationData?.participant_1_profile?.avatar_url} />
-                        <AvatarFallback className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-semibold">
-                          {(selectedConversationData?.participant_1 === user?.id 
-                            ? selectedConversationData?.participant_2_profile?.full_name 
-                            : selectedConversationData?.participant_1_profile?.full_name)?.split(' ').map(n => n[0]).join('') || 
-                           (selectedConversationData?.participant_1 === user?.id 
-                            ? selectedConversationData?.participant_2_profile?.username 
-                            : selectedConversationData?.participant_1_profile?.username)?.[0]}
-                        </AvatarFallback>
-                      </Avatar>
-                      
-                      <div>
-                        <h2 className="font-semibold text-white">
-                          {selectedConversationData?.participant_1 === user?.id 
-                            ? selectedConversationData?.participant_2_profile?.full_name || selectedConversationData?.participant_2_profile?.username
-                            : selectedConversationData?.participant_1_profile?.full_name || selectedConversationData?.participant_1_profile?.username}
-                        </h2>
-                        <p className="text-sm text-green-400">Online</p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        className="h-10 w-10 p-0 text-cyan-400 hover:bg-cyan-500/20"
-                        onClick={() => handleCall('voice')}
-                      >
-                        <Phone className="w-5 h-5" />
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        className="h-10 w-10 p-0 text-cyan-400 hover:bg-cyan-500/20"
-                        onClick={() => handleCall('video')}
-                      >
-                        <Video className="w-5 h-5" />
-                      </Button>
-                      <Button variant="ghost" size="sm" className="h-10 w-10 p-0 text-cyan-400 hover:bg-cyan-500/20">
-                        <Info className="w-5 h-5" />
-                      </Button>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm" className="h-10 w-10 p-0 text-cyan-400 hover:bg-cyan-500/20">
-                            <MoreVertical className="w-5 h-5" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="bg-slate-800 border-slate-700">
-                          <DropdownMenuItem
-                            onClick={() => handleDeleteConversation(selectedConversation)}
-                            className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
-                          >
-                            <Trash2 className="w-4 h-4 mr-2" />
-                            Delete Conversation
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                  <div className="flex items-center gap-3">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="lg:hidden text-cyan-400"
+                      onClick={() => setShowMobileView(false)}
+                    >
+                      <ArrowLeft className="w-4 h-4" />
+                    </Button>
+                    
+                    <Avatar className="w-10 h-10">
+                      <AvatarImage src={selectedConversationData?.participant_1 === user?.id 
+                        ? selectedConversationData?.participant_2_profile?.avatar_url 
+                        : selectedConversationData?.participant_1_profile?.avatar_url} />
+                      <AvatarFallback className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-semibold">
+                        {(selectedConversationData?.participant_1 === user?.id 
+                          ? selectedConversationData?.participant_2_profile?.full_name 
+                          : selectedConversationData?.participant_1_profile?.full_name)?.split(' ').map(n => n[0]).join('') || 
+                         (selectedConversationData?.participant_1 === user?.id 
+                          ? selectedConversationData?.participant_2_profile?.username 
+                          : selectedConversationData?.participant_1_profile?.username)?.[0]}
+                      </AvatarFallback>
+                    </Avatar>
+                    
+                    <div>
+                      <h2 className="font-semibold text-white">
+                        {selectedConversationData?.participant_1 === user?.id 
+                          ? selectedConversationData?.participant_2_profile?.full_name || selectedConversationData?.participant_2_profile?.username
+                          : selectedConversationData?.participant_1_profile?.full_name || selectedConversationData?.participant_1_profile?.username}
+                      </h2>
+                      <p className="text-sm text-green-400">Online</p>
                     </div>
                   </div>
                 </div>
@@ -571,7 +442,6 @@ export default function Messages() {
                   ) : messages.length === 0 ? (
                     <div className="flex justify-center items-center h-full">
                       <div className="text-center">
-                        <MessageCircle className="w-12 h-12 mx-auto mb-4 text-cyan-400" />
                         <p className="text-cyan-300">Start a conversation!</p>
                         <p className="text-slate-400 text-sm">Send your first message below</p>
                       </div>
@@ -605,24 +475,6 @@ export default function Messages() {
                 {/* Message Input */}
                 <div className="p-4 border-t border-cyan-500/20 bg-slate-900/50">
                   <div className="flex items-end gap-3">
-                    <input
-                      type="file"
-                      ref={fileInputRef}
-                      onChange={handleFileSelect}
-                      className="hidden"
-                      multiple
-                      accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.txt"
-                    />
-                    
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="h-10 w-10 p-0 shrink-0 text-cyan-400 hover:bg-cyan-500/20"
-                      onClick={handleFileAttachment}
-                    >
-                      <Paperclip className="w-5 h-5" />
-                    </Button>
-                    
                     <div className="flex-1 relative">
                       <Input
                         type="text"
@@ -630,11 +482,8 @@ export default function Messages() {
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
                         onKeyPress={handleKeyPress}
-                        className="pr-12 bg-slate-800/50 border-cyan-500/30 text-white placeholder:text-slate-400 focus:border-cyan-400"
+                        className="bg-slate-800/50 border-cyan-500/30 text-white placeholder:text-slate-400 focus:border-cyan-400"
                       />
-                      <Button variant="ghost" size="sm" className="absolute right-2 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0 text-cyan-400 hover:bg-cyan-500/20">
-                        <Smile className="w-4 h-4" />
-                      </Button>
                     </div>
                     
                     <Button 
@@ -654,7 +503,6 @@ export default function Messages() {
             ) : (
               <div className="flex-1 flex items-center justify-center min-h-[calc(100vh-4rem)]">
                 <div className="text-center">
-                  <MessageCircle className="w-20 h-20 mx-auto mb-6 text-cyan-400" />
                   <h3 className="text-xl font-semibold text-white mb-2">
                     Select a conversation
                   </h3>

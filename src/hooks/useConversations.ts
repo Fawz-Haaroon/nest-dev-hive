@@ -21,13 +21,7 @@ export const useConversations = () => {
           *,
           participant_1_profile:profiles!conversations_participant_1_fkey(id, username, full_name, avatar_url),
           participant_2_profile:profiles!conversations_participant_2_fkey(id, username, full_name, avatar_url),
-          messages(
-            id,
-            content,
-            created_at,
-            sender_id,
-            read
-          )
+          messages(id, content, created_at, sender_id, read)
         `)
         .or(`participant_1.eq.${user.id},participant_2.eq.${user.id}`)
         .order('updated_at', { ascending: false });
@@ -49,14 +43,14 @@ export const useConversations = () => {
       
       console.log('Creating conversation between:', user.id, 'and', participantId);
       
-      // Check if conversation already exists (both directions)
+      // Check if conversation already exists (both directions due to unique constraint)
       const { data: existing, error: existingError } = await supabase
         .from('conversations')
         .select('id')
         .or(`and(participant_1.eq.${user.id},participant_2.eq.${participantId}),and(participant_1.eq.${participantId},participant_2.eq.${user.id})`)
         .maybeSingle();
 
-      if (existingError) {
+      if (existingError && existingError.code !== 'PGRST116') {
         console.error('Error checking existing conversation:', existingError);
         throw existingError;
       }
@@ -67,15 +61,11 @@ export const useConversations = () => {
       }
 
       // Create new conversation - always put current user as participant_1
-      console.log('Creating new conversation with participants:', user.id, participantId);
-      
       const { data, error } = await supabase
         .from('conversations')
         .insert({
           participant_1: user.id,
-          participant_2: participantId,
-          type: 'direct',
-          created_by: user.id
+          participant_2: participantId
         })
         .select('id')
         .single();
@@ -91,9 +81,6 @@ export const useConversations = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
     },
-    onError: (error) => {
-      console.error('Conversation creation failed:', error);
-    }
   });
 
   // Set up real-time subscription for conversations
@@ -130,9 +117,7 @@ export const useConversations = () => {
           queryClient.invalidateQueries({ queryKey: ['conversations'] });
         }
       )
-      .subscribe((status) => {
-        console.log('Real-time conversations subscription status:', status);
-      });
+      .subscribe();
 
     return () => {
       console.log('Cleaning up conversations real-time subscription');
