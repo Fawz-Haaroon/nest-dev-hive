@@ -79,7 +79,7 @@ export const useMessages = (conversationId: string | null) => {
     },
   });
 
-  // NEW: Mark all messages in a conversation as read
+  // UPDATED: Mark all messages in a conversation as read
   const markAllMessagesAsRead = useMutation({
     mutationFn: async (conversationId: string) => {
       if (!user) return;
@@ -102,8 +102,11 @@ export const useMessages = (conversationId: string | null) => {
     },
     onSuccess: () => {
       console.log('🔄 Invalidating queries after marking as read');
+      // Force refresh both conversations and messages
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
       queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
+      // Also refetch immediately to ensure UI updates
+      queryClient.refetchQueries({ queryKey: ['conversations'] });
     },
   });
 
@@ -138,9 +141,11 @@ export const useMessages = (conversationId: string | null) => {
           filter: `conversation_id=eq.${conversationId}`
         },
         (payload) => {
-          console.log('Real-time message updated:', payload);
+          console.log('Real-time message updated (read status changed):', payload);
           queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
           queryClient.invalidateQueries({ queryKey: ['conversations'] });
+          // Force immediate refetch of conversations to update unread counts
+          queryClient.refetchQueries({ queryKey: ['conversations'] });
         }
       )
       .subscribe();

@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -84,16 +83,20 @@ export default function Messages() {
     },
   });
 
-  // NEW: Calculate unread count for each conversation
+  // UPDATED: Calculate unread count for each conversation with better logging
   const getUnreadCount = (conversation: any) => {
-    if (!conversation.messages || !user) return 0;
+    if (!conversation.messages || !user) {
+      console.log(`📊 No messages or user for conversation ${conversation.id}`);
+      return 0;
+    }
     
     // Count messages that are not from current user and not read
     const unreadMessages = conversation.messages.filter((msg: any) => 
       msg.sender_id !== user.id && msg.read === false
     );
     
-    console.log(`📊 Conversation ${conversation.id} has ${unreadMessages.length} unread messages`);
+    console.log(`📊 Conversation ${conversation.id} has ${unreadMessages.length} unread messages out of ${conversation.messages.length} total`);
+    console.log(`📊 Unread message IDs:`, unreadMessages.map((m: any) => m.id));
     return unreadMessages.length;
   };
 
@@ -252,15 +255,20 @@ export default function Messages() {
     }
   };
 
-  // NEW: Handle conversation selection and mark as read
-  const handleSelectConversation = (conversationId: string) => {
+  // UPDATED: Handle conversation selection and mark as read with better error handling
+  const handleSelectConversation = async (conversationId: string) => {
     console.log('🎯 SELECTING CONVERSATION:', conversationId);
     setSelectedConversation(conversationId);
     setShowMobileView(true);
     
     // Immediately mark all messages as read when conversation is opened
     console.log('🔵 MARKING CONVERSATION AS READ:', conversationId);
-    markAllMessagesAsRead.mutate(conversationId);
+    try {
+      await markAllMessagesAsRead.mutateAsync(conversationId);
+      console.log('✅ Successfully marked conversation as read');
+    } catch (error) {
+      console.error('❌ Failed to mark conversation as read:', error);
+    }
   };
 
   useEffect(() => {
@@ -444,7 +452,7 @@ export default function Messages() {
                   })}
                 </div>
               ) : (
-                // Conversations View
+                // Conversations View - UPDATED with better unread indicators
                 filteredConversations.length > 0 ? (
                   filteredConversations.map((conversation) => {
                     const otherParticipant = conversation.participant_1 === user?.id 
@@ -455,7 +463,7 @@ export default function Messages() {
                     const unreadCount = getUnreadCount(conversation);
                     const isOnline = isUserOnline(otherParticipant?.id || '');
 
-                    console.log(`🔍 Conversation ${conversation.id} unread count: ${unreadCount}`);
+                    console.log(`🔍 Rendering conversation ${conversation.id} with unread count: ${unreadCount}`);
 
                     return (
                       <div
@@ -504,9 +512,10 @@ export default function Messages() {
                           </div>
                           
                           <div className="flex flex-col items-center gap-1 flex-shrink-0">
+                            {/* UPDATED: More prominent unread indicator */}
                             {unreadCount > 0 && (
-                              <div className="bg-red-500 text-white text-xs h-5 w-5 rounded-full flex items-center justify-center font-medium">
-                                {unreadCount > 9 ? '9+' : unreadCount}
+                              <div className="bg-red-500 text-white text-xs min-h-[20px] min-w-[20px] rounded-full flex items-center justify-center font-medium px-1 animate-pulse">
+                                {unreadCount > 99 ? '99+' : unreadCount}
                               </div>
                             )}
                             <DropdownMenu>
