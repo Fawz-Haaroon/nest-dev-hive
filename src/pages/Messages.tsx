@@ -142,7 +142,7 @@ export default function Messages() {
       console.error('Failed to create conversation:', error);
       toast({
         title: "Error",
-        description: "Failed to start conversation. Please try again.",
+        description: `Failed to start conversation: ${error.message}`,
         variant: "destructive",
       });
     }
@@ -340,77 +340,12 @@ export default function Messages() {
 
             {/* Content */}
             <div className="flex-1 overflow-y-auto">
-              {/* Show filtered friends when searching and no conversations match */}
-              {searchTerm && filteredConversations.length === 0 && filteredFriends.length > 0 && (
-                <div className="p-4">
-                  <h3 className="font-semibold text-sm text-cyan-300 mb-3">Friends</h3>
-                  {filteredFriends.map((friend) => {
-                    const friendProfile = friend.user_id === user.id ? friend.friend_profile : friend.user_profile;
-                    return (
-                      <button
-                        key={friend.id}
-                        onClick={() => {
-                          handleStartConversation(friendProfile.id);
-                        }}
-                        className="w-full p-3 text-left hover:bg-cyan-500/10 transition-all duration-200 rounded-lg"
-                      >
-                        <div className="flex items-center gap-3">
-                          <Avatar className="w-10 h-10">
-                            <AvatarImage src={friendProfile.avatar_url || ''} />
-                            <AvatarFallback className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-semibold">
-                              {friendProfile.full_name?.split(' ').map(n => n[0]).join('') || friendProfile.username[0]}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <h3 className="font-semibold text-white">
-                              {friendProfile.full_name || friendProfile.username}
-                            </h3>
-                            <p className="text-sm text-slate-400">@{friendProfile.username}</p>
-                          </div>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-
-              {/* Show all friends when no search term and no conversations */}
-              {!searchTerm && filteredConversations.length === 0 && (
-                <div className="p-4">
-                  <h3 className="font-semibold text-sm text-cyan-300 mb-3">Friends</h3>
-                  {friends.map((friend) => {
-                    const friendProfile = friend.user_id === user.id ? friend.friend_profile : friend.user_profile;
-                    return (
-                      <button
-                        key={friend.id}
-                        onClick={() => {
-                          handleStartConversation(friendProfile.id);
-                        }}
-                        className="w-full p-3 text-left hover:bg-cyan-500/10 transition-all duration-200 rounded-lg"
-                      >
-                        <div className="flex items-center gap-3">
-                          <Avatar className="w-10 h-10">
-                            <AvatarImage src={friendProfile.avatar_url || ''} />
-                            <AvatarFallback className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-semibold">
-                              {friendProfile.full_name?.split(' ').map(n => n[0]).join('') || friendProfile.username[0]}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <h3 className="font-semibold text-white">
-                              {friendProfile.full_name || friendProfile.username}
-                            </h3>
-                            <p className="text-sm text-slate-400">@{friendProfile.username}</p>
-                          </div>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-
-              {/* Conversations */}
+              {/* Show conversations first, then friends */}
               {filteredConversations.length > 0 && (
-                <div className="flex-1 overflow-y-auto">
+                <div className="border-b border-cyan-500/20">
+                  <div className="p-4">
+                    <h3 className="font-semibold text-sm text-cyan-300 mb-3">Conversations</h3>
+                  </div>
                   {filteredConversations.map((conversation) => {
                     const otherParticipant = conversation.participant_1 === user?.id 
                       ? conversation.participant_2_profile 
@@ -494,6 +429,53 @@ export default function Messages() {
                       </div>
                     );
                   })}
+                </div>
+              )}
+
+              {/* Show filtered friends when searching OR when no conversations exist */}
+              {((searchTerm && filteredFriends.length > 0) || (!searchTerm && filteredConversations.length === 0 && filteredFriends.length > 0)) && (
+                <div className="p-4">
+                  <h3 className="font-semibold text-sm text-cyan-300 mb-3">Friends</h3>
+                  {filteredFriends.map((friend) => {
+                    const friendProfile = friend.user_id === user.id ? friend.friend_profile : friend.user_profile;
+                    return (
+                      <button
+                        key={friend.id}
+                        onClick={() => {
+                          handleStartConversation(friendProfile.id);
+                        }}
+                        className="w-full p-3 text-left hover:bg-cyan-500/10 transition-all duration-200 rounded-lg"
+                        disabled={createConversation.isPending}
+                      >
+                        <div className="flex items-center gap-3">
+                          <Avatar className="w-10 h-10">
+                            <AvatarImage src={friendProfile.avatar_url || ''} />
+                            <AvatarFallback className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-semibold">
+                              {friendProfile.full_name?.split(' ').map(n => n[0]).join('') || friendProfile.username[0]}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-white">
+                              {friendProfile.full_name || friendProfile.username}
+                            </h3>
+                            <p className="text-sm text-slate-400">@{friendProfile.username}</p>
+                          </div>
+                          {createConversation.isPending && (
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-cyan-400"></div>
+                          )}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* No content state */}
+              {filteredConversations.length === 0 && filteredFriends.length === 0 && (
+                <div className="p-4 text-center">
+                  <MessageCircle className="w-12 h-12 mx-auto mb-4 text-slate-400" />
+                  <p className="text-slate-400">No conversations or friends found</p>
+                  <p className="text-sm text-slate-500">Add friends to start messaging</p>
                 </div>
               )}
             </div>

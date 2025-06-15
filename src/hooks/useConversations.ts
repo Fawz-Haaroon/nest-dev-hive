@@ -58,6 +58,7 @@ export const useConversations = () => {
 
       if (existingError) {
         console.error('Error checking existing conversation:', existingError);
+        throw existingError;
       }
 
       if (existing) {
@@ -65,16 +66,14 @@ export const useConversations = () => {
         return existing.id;
       }
 
-      // Create new conversation with consistent participant ordering
-      const [participant1, participant2] = [user.id, participantId].sort();
-      
-      console.log('Creating new conversation with participants:', participant1, participant2);
+      // Create new conversation - always put current user as participant_1
+      console.log('Creating new conversation with participants:', user.id, participantId);
       
       const { data, error } = await supabase
         .from('conversations')
         .insert({
-          participant_1: participant1,
-          participant_2: participant2,
+          participant_1: user.id,
+          participant_2: participantId,
           type: 'direct',
           created_by: user.id
         })
