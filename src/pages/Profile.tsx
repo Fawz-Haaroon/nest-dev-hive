@@ -1,8 +1,7 @@
-
 import { Navbar } from '@/components/Navbar';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/useProfile';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { ProfilePictureUpload } from '@/components/ProfilePictureUpload';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -34,12 +33,11 @@ const Profile = () => {
           <Card className="mb-8">
             <CardContent className="p-8">
               <div className="flex flex-col md:flex-row gap-8 items-center md:items-start">
-                <Avatar className="w-32 h-32 border-4 border-blue-200 dark:border-blue-800">
-                  <AvatarImage src={profile?.avatar_url || "/placeholder.svg"} />
-                  <AvatarFallback className="bg-gradient-to-r from-blue-500 to-purple-500 text-white text-2xl font-bold">
-                    {profile?.username?.slice(0, 2).toUpperCase() || 'U'}
-                  </AvatarFallback>
-                </Avatar>
+                <ProfilePictureUpload 
+                  currentAvatarUrl={profile?.avatar_url}
+                  username={profile?.username}
+                  size="lg"
+                />
                 
                 <div className="flex-1 text-center md:text-left">
                   <div className="flex flex-col md:flex-row md:items-center gap-4 mb-4">

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -10,14 +9,16 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { X } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useUpdateProfile } from '@/hooks/useProfile';
+import { useUpdateProfile, useProfile } from '@/hooks/useProfile';
 import { useToast } from '@/hooks/use-toast';
+import { ProfilePictureUpload } from '@/components/ProfilePictureUpload';
 
 const ProfileSetup = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const updateProfile = useUpdateProfile();
   const { toast } = useToast();
+  const { data: profile } = useProfile(user?.id);
 
   const [formData, setFormData] = useState({
     full_name: '',
@@ -111,6 +112,18 @@ const ProfileSetup = () => {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Profile Picture Section */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Profile Picture</h3>
+                <div className="flex justify-center">
+                  <ProfilePictureUpload 
+                    currentAvatarUrl={profile?.avatar_url}
+                    username={profile?.username}
+                    size="lg"
+                  />
+                </div>
+              </div>
+
               {/* Basic Information */}
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Basic Information</h3>
