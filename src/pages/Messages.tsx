@@ -49,7 +49,7 @@ export default function Messages() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { conversations, isLoading: conversationsLoading, createConversation } = useConversations();
-  const { messages, isLoading: messagesLoading, sendMessage } = useMessages(selectedConversation);
+  const { messages, isLoading: messagesLoading, sendMessage, markAllMessagesAsRead } = useMessages(selectedConversation);
   const { friends, pendingRequests, isLoading: friendsLoading, respondToFriendRequest } = useFriends();
   const { isUserOnline } = useUserPresence();
 
@@ -84,44 +84,18 @@ export default function Messages() {
     },
   });
 
-  // Simple unread count calculation for each conversation
+  // NEW: Calculate unread count for each conversation
   const getUnreadCount = (conversation: any) => {
     if (!conversation.messages || !user) return 0;
     
+    // Count messages that are not from current user and not read
     const unreadMessages = conversation.messages.filter((msg: any) => 
-      msg.sender_id !== user.id && !msg.read
+      msg.sender_id !== user.id && msg.read === false
     );
     
-    console.log(`Conversation ${conversation.id} unread count:`, unreadMessages.length);
+    console.log(`📊 Conversation ${conversation.id} has ${unreadMessages.length} unread messages`);
     return unreadMessages.length;
   };
-
-  // Mark messages as read when conversation is selected
-  const markMessagesAsRead = useMutation({
-    mutationFn: async (conversationId: string) => {
-      if (!user) return;
-      
-      console.log('Marking messages as read for conversation:', conversationId);
-      
-      const { error } = await supabase
-        .from('messages')
-        .update({ read: true })
-        .eq('conversation_id', conversationId)
-        .neq('sender_id', user.id)
-        .eq('read', false);
-
-      if (error) {
-        console.error('Error marking messages as read:', error);
-        throw error;
-      }
-      
-      console.log('Messages marked as read successfully');
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['conversations'] });
-      queryClient.invalidateQueries({ queryKey: ['messages', selectedConversation] });
-    },
-  });
 
   // Enhanced search functionality
   const filteredConversations = conversations.filter(conversation => {
@@ -278,13 +252,15 @@ export default function Messages() {
     }
   };
 
+  // NEW: Handle conversation selection and mark as read
   const handleSelectConversation = (conversationId: string) => {
-    console.log('Selecting conversation:', conversationId);
+    console.log('🎯 SELECTING CONVERSATION:', conversationId);
     setSelectedConversation(conversationId);
     setShowMobileView(true);
     
-    // Mark messages as read when conversation is opened
-    markMessagesAsRead.mutate(conversationId);
+    // Immediately mark all messages as read when conversation is opened
+    console.log('🔵 MARKING CONVERSATION AS READ:', conversationId);
+    markAllMessagesAsRead.mutate(conversationId);
   };
 
   useEffect(() => {
@@ -479,6 +455,8 @@ export default function Messages() {
                     const unreadCount = getUnreadCount(conversation);
                     const isOnline = isUserOnline(otherParticipant?.id || '');
 
+                    console.log(`🔍 Conversation ${conversation.id} unread count: ${unreadCount}`);
+
                     return (
                       <div
                         key={conversation.id}
@@ -527,7 +505,7 @@ export default function Messages() {
                           
                           <div className="flex flex-col items-center gap-1 flex-shrink-0">
                             {unreadCount > 0 && (
-                              <div className="bg-blue-500 text-white text-xs h-5 w-5 rounded-full flex items-center justify-center font-medium">
+                              <div className="bg-red-500 text-white text-xs h-5 w-5 rounded-full flex items-center justify-center font-medium">
                                 {unreadCount > 9 ? '9+' : unreadCount}
                               </div>
                             )}

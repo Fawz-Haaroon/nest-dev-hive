@@ -79,6 +79,34 @@ export const useMessages = (conversationId: string | null) => {
     },
   });
 
+  // NEW: Mark all messages in a conversation as read
+  const markAllMessagesAsRead = useMutation({
+    mutationFn: async (conversationId: string) => {
+      if (!user) return;
+      
+      console.log('🔵 MARKING ALL MESSAGES AS READ for conversation:', conversationId);
+      
+      const { error } = await supabase
+        .from('messages')
+        .update({ read: true })
+        .eq('conversation_id', conversationId)
+        .neq('sender_id', user.id)
+        .eq('read', false);
+
+      if (error) {
+        console.error('❌ Error marking messages as read:', error);
+        throw error;
+      }
+      
+      console.log('✅ ALL MESSAGES MARKED AS READ SUCCESSFULLY');
+    },
+    onSuccess: () => {
+      console.log('🔄 Invalidating queries after marking as read');
+      queryClient.invalidateQueries({ queryKey: ['conversations'] });
+      queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
+    },
+  });
+
   // Set up real-time subscription for messages
   useEffect(() => {
     if (!conversationId || !user) return;
@@ -127,5 +155,6 @@ export const useMessages = (conversationId: string | null) => {
     messages,
     isLoading,
     sendMessage,
+    markAllMessagesAsRead,
   };
 };
