@@ -148,19 +148,13 @@ export const useMessages = (conversationId: string | null) => {
     };
   }, [conversationId, queryClient, user]);
 
-  // Auto-mark messages as read when conversation is selected and messages are loaded
+  // Simple logic: mark messages as read when conversation is opened
   useEffect(() => {
-    if (!conversationId || !user || isLoading || messages.length === 0) return;
-
-    const unreadMessages = messages.filter(m => !m.read && m.sender_id !== user.id);
-    console.log('Checking unread messages:', unreadMessages.length);
+    if (!conversationId || !user) return;
     
-    if (unreadMessages.length > 0) {
-      console.log('Auto-marking messages as read...');
-      // Mark as read immediately when conversation is viewed
-      markMessagesAsRead.mutate();
-    }
-  }, [conversationId, user?.id, isLoading, messages.length]);
+    console.log('Conversation opened, marking messages as read for:', conversationId);
+    markMessagesAsRead.mutate();
+  }, [conversationId, user?.id]);
 
   return {
     messages,
