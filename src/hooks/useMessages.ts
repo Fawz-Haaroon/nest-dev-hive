@@ -79,13 +79,34 @@ export const useMessages = (conversationId: string | null) => {
     },
   });
 
-  // UPDATED: Mark all messages in a conversation as read
+  // FIXED: Simplified mark as read function with better error handling
   const markAllMessagesAsRead = useMutation({
     mutationFn: async (conversationId: string) => {
       if (!user) return;
       
       console.log('🔵 MARKING ALL MESSAGES AS READ for conversation:', conversationId);
       
+      // First, get all unread messages for this conversation that are not from the current user
+      const { data: unreadMessages, error: fetchError } = await supabase
+        .from('messages')
+        .select('id')
+        .eq('conversation_id', conversationId)
+        .neq('sender_id', user.id)
+        .eq('read', false);
+
+      if (fetchError) {
+        console.error('❌ Error fetching unread messages:', fetchError);
+        throw fetchError;
+      }
+
+      console.log('📊 Found unread messages:', unreadMessages?.length || 0);
+
+      if (!unreadMessages || unreadMessages.length === 0) {
+        console.log('✅ No unread messages to mark');
+        return;
+      }
+
+      // Mark them as read
       const { error } = await supabase
         .from('messages')
         .update({ read: true })
@@ -99,13 +120,13 @@ export const useMessages = (conversationId: string | null) => {
       }
       
       console.log('✅ ALL MESSAGES MARKED AS READ SUCCESSFULLY');
+      return unreadMessages.length;
     },
-    onSuccess: () => {
-      console.log('🔄 Invalidating queries after marking as read');
-      // Force refresh both conversations and messages
+    onSuccess: (markedCount) => {
+      console.log('🔄 Invalidating queries after marking', markedCount, 'messages as read');
+      // Immediately invalidate and refetch both queries
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
       queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
-      // Also refetch immediately to ensure UI updates
       queryClient.refetchQueries({ queryKey: ['conversations'] });
     },
   });
@@ -144,7 +165,6 @@ export const useMessages = (conversationId: string | null) => {
           console.log('Real-time message updated (read status changed):', payload);
           queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
           queryClient.invalidateQueries({ queryKey: ['conversations'] });
-          // Force immediate refetch of conversations to update unread counts
           queryClient.refetchQueries({ queryKey: ['conversations'] });
         }
       )

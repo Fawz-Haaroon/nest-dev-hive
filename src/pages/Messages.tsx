@@ -83,10 +83,9 @@ export default function Messages() {
     },
   });
 
-  // UPDATED: Calculate unread count for each conversation with better logging
+  // FIXED: Better unread count calculation
   const getUnreadCount = (conversation: any) => {
     if (!conversation.messages || !user) {
-      console.log(`📊 No messages or user for conversation ${conversation.id}`);
       return 0;
     }
     
@@ -95,8 +94,12 @@ export default function Messages() {
       msg.sender_id !== user.id && msg.read === false
     );
     
-    console.log(`📊 Conversation ${conversation.id} has ${unreadMessages.length} unread messages out of ${conversation.messages.length} total`);
-    console.log(`📊 Unread message IDs:`, unreadMessages.map((m: any) => m.id));
+    console.log(`📊 Conversation ${conversation.id}:`, {
+      totalMessages: conversation.messages.length,
+      unreadCount: unreadMessages.length,
+      unreadIds: unreadMessages.map((m: any) => m.id)
+    });
+    
     return unreadMessages.length;
   };
 
@@ -255,20 +258,24 @@ export default function Messages() {
     }
   };
 
-  // UPDATED: Handle conversation selection and mark as read with better error handling
+  // FIXED: Enhanced conversation selection with immediate read marking
   const handleSelectConversation = async (conversationId: string) => {
     console.log('🎯 SELECTING CONVERSATION:', conversationId);
+    
+    // Set the conversation first
     setSelectedConversation(conversationId);
     setShowMobileView(true);
     
-    // Immediately mark all messages as read when conversation is opened
-    console.log('🔵 MARKING CONVERSATION AS READ:', conversationId);
-    try {
-      await markAllMessagesAsRead.mutateAsync(conversationId);
-      console.log('✅ Successfully marked conversation as read');
-    } catch (error) {
-      console.error('❌ Failed to mark conversation as read:', error);
-    }
+    // Wait a moment for the conversation to be set, then mark as read
+    setTimeout(async () => {
+      console.log('🔵 MARKING CONVERSATION AS READ:', conversationId);
+      try {
+        const result = await markAllMessagesAsRead.mutateAsync(conversationId);
+        console.log('✅ Successfully marked conversation as read, marked count:', result);
+      } catch (error) {
+        console.error('❌ Failed to mark conversation as read:', error);
+      }
+    }, 100);
   };
 
   useEffect(() => {
@@ -452,7 +459,7 @@ export default function Messages() {
                   })}
                 </div>
               ) : (
-                // Conversations View - UPDATED with better unread indicators
+                // Conversations View - FIXED with better unread count display
                 filteredConversations.length > 0 ? (
                   filteredConversations.map((conversation) => {
                     const otherParticipant = conversation.participant_1 === user?.id 
@@ -512,9 +519,9 @@ export default function Messages() {
                           </div>
                           
                           <div className="flex flex-col items-center gap-1 flex-shrink-0">
-                            {/* UPDATED: More prominent unread indicator */}
+                            {/* FIXED: More prominent and reliable unread indicator */}
                             {unreadCount > 0 && (
-                              <div className="bg-red-500 text-white text-xs min-h-[20px] min-w-[20px] rounded-full flex items-center justify-center font-medium px-1 animate-pulse">
+                              <div className="bg-red-500 text-white text-xs min-h-[20px] min-w-[20px] rounded-full flex items-center justify-center font-medium px-1 shadow-lg ring-2 ring-red-500/30">
                                 {unreadCount > 99 ? '99+' : unreadCount}
                               </div>
                             )}
