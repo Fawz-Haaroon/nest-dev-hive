@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -49,7 +48,7 @@ export default function Messages() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { conversations, isLoading: conversationsLoading, createConversation } = useConversations();
-  const { messages, isLoading: messagesLoading, sendMessage, markAsRead } = useMessages(selectedConversation);
+  const { messages, isLoading: messagesLoading, sendMessage } = useMessages(selectedConversation);
   const { friends, pendingRequests, isLoading: friendsLoading, respondToFriendRequest } = useFriends();
   const { isUserOnline } = useUserPresence();
 
@@ -74,15 +73,6 @@ export default function Messages() {
       });
     },
   });
-
-  // Simple unread count calculation
-  const getUnreadCount = (conversation: any) => {
-    if (!conversation.messages || !user) return 0;
-    
-    return conversation.messages.filter((msg: any) => 
-      msg.sender_id !== user.id && !msg.read
-    ).length;
-  };
 
   // Enhanced search functionality
   const filteredConversations = conversations.filter(conversation => {
@@ -224,14 +214,10 @@ export default function Messages() {
     }
   };
 
-  // Simple conversation selection with read marking
   const handleSelectConversation = (conversationId: string) => {
     console.log('Selecting conversation:', conversationId);
     setSelectedConversation(conversationId);
     setShowMobileView(true);
-    
-    // Mark messages as read
-    markAsRead.mutate(conversationId);
   };
 
   useEffect(() => {
@@ -423,7 +409,6 @@ export default function Messages() {
                       : conversation.participant_1_profile;
                     
                     const lastMessage = conversation.messages?.[conversation.messages.length - 1];
-                    const unreadCount = getUnreadCount(conversation);
                     const isOnline = isUserOnline(otherParticipant?.id || '');
 
                     return (
@@ -473,11 +458,6 @@ export default function Messages() {
                           </div>
                           
                           <div className="flex flex-col items-center gap-1 flex-shrink-0">
-                            {unreadCount > 0 && (
-                              <div className="bg-red-500 text-white text-xs min-h-[20px] min-w-[20px] rounded-full flex items-center justify-center font-medium px-1">
-                                {unreadCount > 99 ? '99+' : unreadCount}
-                              </div>
-                            )}
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button
