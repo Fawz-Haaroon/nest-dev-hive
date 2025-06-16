@@ -79,55 +79,30 @@ export const useMessages = (conversationId: string | null) => {
     },
   });
 
-  // FIXED: Simplified mark as read function with better error handling
-  const markAllMessagesAsRead = useMutation({
+  // Simple function to mark messages as read when conversation is opened
+  const markAsRead = useMutation({
     mutationFn: async (conversationId: string) => {
       if (!user) return;
       
-      console.log('🔵 MARKING ALL MESSAGES AS READ for conversation:', conversationId);
+      console.log('🔵 Marking messages as read for conversation:', conversationId);
       
-      // First, get all unread messages for this conversation that are not from the current user
-      const { data: unreadMessages, error: fetchError } = await supabase
-        .from('messages')
-        .select('id')
-        .eq('conversation_id', conversationId)
-        .neq('sender_id', user.id)
-        .eq('read', false);
-
-      if (fetchError) {
-        console.error('❌ Error fetching unread messages:', fetchError);
-        throw fetchError;
-      }
-
-      console.log('📊 Found unread messages:', unreadMessages?.length || 0);
-
-      if (!unreadMessages || unreadMessages.length === 0) {
-        console.log('✅ No unread messages to mark');
-        return;
-      }
-
-      // Mark them as read
       const { error } = await supabase
         .from('messages')
         .update({ read: true })
         .eq('conversation_id', conversationId)
-        .neq('sender_id', user.id)
-        .eq('read', false);
+        .neq('sender_id', user.id) // Don't mark own messages
+        .eq('read', false); // Only unread messages
 
       if (error) {
         console.error('❌ Error marking messages as read:', error);
         throw error;
       }
       
-      console.log('✅ ALL MESSAGES MARKED AS READ SUCCESSFULLY');
-      return unreadMessages.length;
+      console.log('✅ Messages marked as read');
     },
-    onSuccess: (markedCount) => {
-      console.log('🔄 Invalidating queries after marking', markedCount, 'messages as read');
-      // Immediately invalidate and refetch both queries
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
       queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
-      queryClient.refetchQueries({ queryKey: ['conversations'] });
     },
   });
 
@@ -162,10 +137,9 @@ export const useMessages = (conversationId: string | null) => {
           filter: `conversation_id=eq.${conversationId}`
         },
         (payload) => {
-          console.log('Real-time message updated (read status changed):', payload);
+          console.log('Real-time message updated:', payload);
           queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
           queryClient.invalidateQueries({ queryKey: ['conversations'] });
-          queryClient.refetchQueries({ queryKey: ['conversations'] });
         }
       )
       .subscribe();
@@ -180,6 +154,6 @@ export const useMessages = (conversationId: string | null) => {
     messages,
     isLoading,
     sendMessage,
-    markAllMessagesAsRead,
+    markAsRead,
   };
 };

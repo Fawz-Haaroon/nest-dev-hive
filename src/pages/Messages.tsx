@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -48,18 +49,9 @@ export default function Messages() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { conversations, isLoading: conversationsLoading, createConversation } = useConversations();
-  const { messages, isLoading: messagesLoading, sendMessage, markAllMessagesAsRead } = useMessages(selectedConversation);
+  const { messages, isLoading: messagesLoading, sendMessage, markAsRead } = useMessages(selectedConversation);
   const { friends, pendingRequests, isLoading: friendsLoading, respondToFriendRequest } = useFriends();
   const { isUserOnline } = useUserPresence();
-
-  console.log('Messages component state:', {
-    user: user?.id,
-    selectedConversation,
-    conversationsCount: conversations.length,
-    messagesCount: messages.length,
-    friendsCount: friends.length,
-    showFriendsView
-  });
 
   const selectedConversationData = conversations.find(c => c.id === selectedConversation);
 
@@ -83,24 +75,13 @@ export default function Messages() {
     },
   });
 
-  // FIXED: Better unread count calculation
+  // Simple unread count calculation
   const getUnreadCount = (conversation: any) => {
-    if (!conversation.messages || !user) {
-      return 0;
-    }
+    if (!conversation.messages || !user) return 0;
     
-    // Count messages that are not from current user and not read
-    const unreadMessages = conversation.messages.filter((msg: any) => 
-      msg.sender_id !== user.id && msg.read === false
-    );
-    
-    console.log(`📊 Conversation ${conversation.id}:`, {
-      totalMessages: conversation.messages.length,
-      unreadCount: unreadMessages.length,
-      unreadIds: unreadMessages.map((m: any) => m.id)
-    });
-    
-    return unreadMessages.length;
+    return conversation.messages.filter((msg: any) => 
+      msg.sender_id !== user.id && !msg.read
+    ).length;
   };
 
   // Enhanced search functionality
@@ -136,10 +117,8 @@ export default function Messages() {
   const handleSendMessage = async () => {
     if (newMessage.trim() && selectedConversation) {
       try {
-        console.log('Sending message:', newMessage.trim());
         await sendMessage.mutateAsync({ content: newMessage.trim() });
         setNewMessage('');
-        console.log('Message sent successfully');
       } catch (error) {
         console.error('Failed to send message:', error);
         toast({
@@ -156,30 +135,19 @@ export default function Messages() {
     if (!file || !selectedConversation) return;
 
     try {
-      console.log('Starting file upload:', file.name);
-      
       const fileExt = file.name.split('.').pop();
       const fileName = `${user?.id}/${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
       const filePath = fileName;
-
-      console.log('Uploading file to path:', filePath);
 
       const { error: uploadError } = await supabase.storage
         .from('messages')
         .upload(filePath, file);
 
-      if (uploadError) {
-        console.error('Upload error:', uploadError);
-        throw uploadError;
-      }
-
-      console.log('File uploaded successfully');
+      if (uploadError) throw uploadError;
 
       const { data } = supabase.storage
         .from('messages')
         .getPublicUrl(filePath);
-
-      console.log('Public URL:', data.publicUrl);
 
       await sendMessage.mutateAsync({ 
         content: `📎 ${file.name}`,
@@ -214,9 +182,7 @@ export default function Messages() {
 
   const handleStartConversation = async (friendId: string) => {
     try {
-      console.log('Starting conversation with friend:', friendId);
       const conversationId = await createConversation.mutateAsync(friendId);
-      console.log('Conversation created/found:', conversationId);
       setSelectedConversation(conversationId);
       setShowMobileView(true);
       setShowFriendsView(false);
@@ -258,24 +224,14 @@ export default function Messages() {
     }
   };
 
-  // FIXED: Enhanced conversation selection with immediate read marking
-  const handleSelectConversation = async (conversationId: string) => {
-    console.log('🎯 SELECTING CONVERSATION:', conversationId);
-    
-    // Set the conversation first
+  // Simple conversation selection with read marking
+  const handleSelectConversation = (conversationId: string) => {
+    console.log('Selecting conversation:', conversationId);
     setSelectedConversation(conversationId);
     setShowMobileView(true);
     
-    // Wait a moment for the conversation to be set, then mark as read
-    setTimeout(async () => {
-      console.log('🔵 MARKING CONVERSATION AS READ:', conversationId);
-      try {
-        const result = await markAllMessagesAsRead.mutateAsync(conversationId);
-        console.log('✅ Successfully marked conversation as read, marked count:', result);
-      } catch (error) {
-        console.error('❌ Failed to mark conversation as read:', error);
-      }
-    }, 100);
+    // Mark messages as read
+    markAsRead.mutate(conversationId);
   };
 
   useEffect(() => {
@@ -459,7 +415,7 @@ export default function Messages() {
                   })}
                 </div>
               ) : (
-                // Conversations View - FIXED with better unread count display
+                // Conversations View
                 filteredConversations.length > 0 ? (
                   filteredConversations.map((conversation) => {
                     const otherParticipant = conversation.participant_1 === user?.id 
@@ -469,8 +425,6 @@ export default function Messages() {
                     const lastMessage = conversation.messages?.[conversation.messages.length - 1];
                     const unreadCount = getUnreadCount(conversation);
                     const isOnline = isUserOnline(otherParticipant?.id || '');
-
-                    console.log(`🔍 Rendering conversation ${conversation.id} with unread count: ${unreadCount}`);
 
                     return (
                       <div
@@ -519,9 +473,8 @@ export default function Messages() {
                           </div>
                           
                           <div className="flex flex-col items-center gap-1 flex-shrink-0">
-                            {/* FIXED: More prominent and reliable unread indicator */}
                             {unreadCount > 0 && (
-                              <div className="bg-red-500 text-white text-xs min-h-[20px] min-w-[20px] rounded-full flex items-center justify-center font-medium px-1 shadow-lg ring-2 ring-red-500/30">
+                              <div className="bg-red-500 text-white text-xs min-h-[20px] min-w-[20px] rounded-full flex items-center justify-center font-medium px-1">
                                 {unreadCount > 99 ? '99+' : unreadCount}
                               </div>
                             )}
@@ -619,7 +572,7 @@ export default function Messages() {
                   </div>
                 </div>
 
-                {/* Messages Area - Take remaining space with hidden scrollbar */}
+                {/* Messages Area */}
                 <div className="flex-1 overflow-y-auto p-6 space-y-4 scrollbar-hide">
                   {messagesLoading ? (
                     <div className="flex justify-center items-center h-full">
@@ -668,7 +621,7 @@ export default function Messages() {
                   <div ref={messagesEndRef} />
                 </div>
 
-                {/* Message Input - Fixed at bottom */}
+                {/* Message Input */}
                 <div className="p-4 border-t border-cyan-500/20 bg-slate-900/50 flex-shrink-0">
                   <div className="flex items-end gap-3">
                     <Button
