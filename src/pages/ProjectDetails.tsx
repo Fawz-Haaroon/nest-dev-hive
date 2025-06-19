@@ -9,15 +9,18 @@ import { ArrowLeft, Users, Calendar, ExternalLink, Github, Settings, Star } from
 import { useProjects } from '@/hooks/useProjects';
 import { ProjectTimeline } from '@/components/ProjectTimeline';
 import { ProjectComments } from '@/components/ProjectComments';
+import { ProjectMembersList } from '@/components/ProjectMembersList';
 import { useAuth } from '@/contexts/AuthContext';
 import { useFavorites } from '@/hooks/useFavorites';
 import { FavoriteButton } from '@/components/FavoriteButton';
+import { useProjectMembers } from '@/hooks/useProjectMembers';
 
 const ProjectDetails = () => {
   const { projectId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { data: projects } = useProjects();
+  const { data: members } = useProjectMembers(projectId);
   
   const project = projects?.find(p => p.id === projectId);
   
@@ -57,6 +60,8 @@ const ProjectDetails = () => {
       default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400';
     }
   };
+
+  const currentMemberCount = members?.length || 1;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
@@ -122,15 +127,19 @@ const ProjectDetails = () => {
               </Card>
 
               <Tabs defaultValue="timeline" className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
+                <TabsList className="grid w-full grid-cols-3">
                   <TabsTrigger value="timeline">Timeline</TabsTrigger>
                   <TabsTrigger value="comments">Discussion</TabsTrigger>
+                  <TabsTrigger value="members">Members</TabsTrigger>
                 </TabsList>
                 <TabsContent value="timeline" className="space-y-6">
                   <ProjectTimeline projectId={project.id} canPost={canPostUpdates} />
                 </TabsContent>
                 <TabsContent value="comments" className="space-y-6">
                   <ProjectComments projectId={project.id} />
+                </TabsContent>
+                <TabsContent value="members" className="space-y-6">
+                  <ProjectMembersList projectId={project.id} isOwner={isOwner} />
                 </TabsContent>
               </Tabs>
             </div>
@@ -151,7 +160,7 @@ const ProjectDetails = () => {
                   
                   <div>
                     <h4 className="font-semibold text-sm text-slate-600 dark:text-slate-400 mb-2">Team Size</h4>
-                    <p className="text-slate-900 dark:text-slate-100">{project.member_count || 1} / {project.max_members} members</p>
+                    <p className="text-slate-900 dark:text-slate-100">{currentMemberCount} / {project.max_members} members</p>
                   </div>
 
                   <div>

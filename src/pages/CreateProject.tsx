@@ -141,15 +141,27 @@ const CreateProject = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="max_members">Max Team Members</Label>
-                  <Input
-                    id="max_members"
-                    type="number"
-                    min="1"
-                    max="20"
-                    value={formData.max_members}
-                    onChange={(e) => setFormData(prev => ({ ...prev, max_members: parseInt(e.target.value) }))}
-                  />
+                  <Label htmlFor="max_members">Maximum Team Members *</Label>
+                  <Select 
+                    value={formData.max_members.toString()} 
+                    onValueChange={(value) => setFormData(prev => ({ ...prev, max_members: parseInt(value) }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="2">2 members</SelectItem>
+                      <SelectItem value="3">3 members</SelectItem>
+                      <SelectItem value="4">4 members</SelectItem>
+                      <SelectItem value="5">5 members</SelectItem>
+                      <SelectItem value="6">6 members</SelectItem>
+                      <SelectItem value="8">8 members</SelectItem>
+                      <SelectItem value="10">10 members</SelectItem>
+                      <SelectItem value="15">15 members</SelectItem>
+                      <SelectItem value="20">20 members</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-sm text-slate-500">Including yourself as the project owner</p>
                 </div>
                 
                 <div className="space-y-2">

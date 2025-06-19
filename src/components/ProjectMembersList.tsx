@@ -1,0 +1,164 @@
+
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Users, Crown, UserMinus, LogOut } from 'lucide-react';
+import { useProjectMembers, useRemoveProjectMember, useLeaveProjectRequest } from '@/hooks/useProjectMembers';
+import { useAuth } from '@/contexts/AuthContext';
+
+interface ProjectMembersListProps {
+  projectId: string;
+  isOwner: boolean;
+}
+
+export const ProjectMembersList = ({ projectId, isOwner }: ProjectMembersListProps) => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { data: members, isLoading } = useProjectMembers(projectId);
+  const removeProjectMember = useRemoveProjectMember();
+  const leaveProjectRequest = useLeaveProjectRequest();
+  
+  const [leaveMessage, setLeaveMessage] = useState('');
+  const [showLeaveDialog, setShowLeaveDialog] = useState(false);
+
+  const handleRemoveMember = async (memberId: string) => {
+    if (confirm('Are you sure you want to remove this member from the project?')) {
+      await removeProjectMember.mutateAsync({ memberId });
+    }
+  };
+
+  const handleLeaveRequest = async () => {
+    await leaveProjectRequest.mutateAsync({
+      projectId,
+      message: leaveMessage
+    });
+    setShowLeaveDialog(false);
+    setLeaveMessage('');
+  };
+
+  const handleViewProfile = (userId: string) => {
+    navigate(`/profile/${userId}`);
+  };
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Users className="w-5 h-5" />
+            Team Members
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p>Loading members...</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const currentUserMember = members?.find(m => m.user_id === user?.id);
+  const isCurrentUserOwner = currentUserMember?.role === 'owner';
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Users className="w-5 h-5" />
+          Team Members ({members?.length || 0})
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {members?.map((member) => (
+          <div key={member.id} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
+            <div className="flex items-center gap-3">
+              <Avatar className="w-10 h-10">
+                <AvatarImage src={member.user.avatar_url || ''} />
+                <AvatarFallback>
+                  {member.user.username?.charAt(0).toUpperCase() || 'U'}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <button
+                  onClick={() => handleViewProfile(member.user_id)}
+                  className="font-medium text-blue-600 dark:text-blue-400 hover:underline"
+                >
+                  {member.user.full_name || member.user.username}
+                </button>
+                <p className="text-sm text-slate-600 dark:text-slate-400">
+                  @{member.user.username}
+                </p>
+              </div>
+              {member.role === 'owner' && (
+                <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400">
+                  <Crown className="w-3 h-3 mr-1" />
+                  Owner
+                </Badge>
+              )}
+            </div>
+            
+            <div className="flex items-center gap-2">
+              {isOwner && member.role !== 'owner' && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleRemoveMember(member.id)}
+                  className="text-red-600 hover:text-red-700"
+                >
+                  <UserMinus className="w-4 h-4" />
+                </Button>
+              )}
+            </div>
+          </div>
+        ))}
+
+        {!isCurrentUserOwner && currentUserMember && (
+          <div className="pt-4 border-t border-slate-200 dark:border-slate-700">
+            <Dialog open={showLeaveDialog} onOpenChange={setShowLeaveDialog}>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="w-full text-red-600 hover:text-red-700">
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Request to Leave Project
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Request to Leave Project</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="leave-message">Message (optional)</Label>
+                    <Textarea
+                      id="leave-message"
+                      value={leaveMessage}
+                      onChange={(e) => setLeaveMessage(e.target.value)}
+                      placeholder="Let the project owner know why you want to leave..."
+                      rows={3}
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button onClick={handleLeaveRequest} className="flex-1">
+                      Send Request
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setShowLeaveDialog(false)}
+                      className="flex-1"
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
