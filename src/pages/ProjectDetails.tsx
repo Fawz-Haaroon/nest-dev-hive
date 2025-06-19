@@ -17,7 +17,7 @@ const ProjectDetails = () => {
   const { projectId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { data: projects } = useProjects({});
+  const { data: projects } = useProjects();
   
   const project = projects?.find(p => p.id === projectId);
   
