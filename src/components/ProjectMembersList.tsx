@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Users, Crown, UserMinus, LogOut } from 'lucide-react';
@@ -28,9 +29,7 @@ export const ProjectMembersList = ({ projectId, isOwner }: ProjectMembersListPro
   const [showLeaveDialog, setShowLeaveDialog] = useState(false);
 
   const handleRemoveMember = async (memberId: string) => {
-    if (confirm('Are you sure you want to remove this member from the project?')) {
-      await removeProjectMember.mutateAsync({ memberId });
-    }
+    await removeProjectMember.mutateAsync({ memberId });
   };
 
   const handleLeaveRequest = async () => {
@@ -64,6 +63,7 @@ export const ProjectMembersList = ({ projectId, isOwner }: ProjectMembersListPro
 
   const currentUserMember = members?.find(m => m.user_id === user?.id);
   const isCurrentUserOwner = currentUserMember?.role === 'owner';
+  const isCurrentUserMember = !!currentUserMember && currentUserMember.role !== 'owner';
 
   return (
     <Card>
@@ -103,21 +103,38 @@ export const ProjectMembersList = ({ projectId, isOwner }: ProjectMembersListPro
             </div>
             
             <div className="flex items-center gap-2">
-              {isOwner && member.role !== 'owner' && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleRemoveMember(member.id)}
-                  className="text-red-600 hover:text-red-700"
-                >
-                  <UserMinus className="w-4 h-4" />
-                </Button>
+              {isCurrentUserOwner && member.role !== 'owner' && (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-red-600 hover:text-red-700"
+                    >
+                      <UserMinus className="w-4 h-4" />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Remove Team Member</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Are you sure you want to remove {member.user.full_name || member.user.username} from this project? This action cannot be undone.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => handleRemoveMember(member.id)}>
+                        Remove Member
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               )}
             </div>
           </div>
         ))}
 
-        {!isCurrentUserOwner && currentUserMember && (
+        {isCurrentUserMember && (
           <div className="pt-4 border-t border-slate-200 dark:border-slate-700">
             <Dialog open={showLeaveDialog} onOpenChange={setShowLeaveDialog}>
               <DialogTrigger asChild>

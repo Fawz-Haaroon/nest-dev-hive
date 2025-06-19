@@ -1,10 +1,10 @@
-
 import { useParams, useNavigate } from 'react-router-dom';
 import { Navbar } from '@/components/Navbar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ArrowLeft, Users, Calendar, ExternalLink, Github, Settings, Star } from 'lucide-react';
 import { useProjects } from '@/hooks/useProjects';
 import { ProjectTimeline } from '@/components/ProjectTimeline';
@@ -14,6 +14,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useFavorites } from '@/hooks/useFavorites';
 import { FavoriteButton } from '@/components/FavoriteButton';
 import { useProjectMembers } from '@/hooks/useProjectMembers';
+import { useState } from 'react';
 
 const ProjectDetails = () => {
   const { projectId } = useParams();
@@ -21,6 +22,7 @@ const ProjectDetails = () => {
   const { user } = useAuth();
   const { data: projects } = useProjects();
   const { data: members } = useProjectMembers(projectId);
+  const [showManageDialog, setShowManageDialog] = useState(false);
   
   const project = projects?.find(p => p.id === projectId);
   
@@ -82,10 +84,22 @@ const ProjectDetails = () => {
             <div className="flex items-center gap-2 ml-auto">
               <FavoriteButton projectId={project.id} />
               {isOwner && (
-                <Button size="sm" className="bg-gradient-to-r from-blue-600 to-blue-700">
-                  <Settings className="w-4 h-4 mr-2" />
-                  Manage
-                </Button>
+                <Dialog open={showManageDialog} onOpenChange={setShowManageDialog}>
+                  <DialogTrigger asChild>
+                    <Button size="sm" className="bg-gradient-to-r from-blue-600 to-blue-700">
+                      <Settings className="w-4 h-4 mr-2" />
+                      Manage
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                    <DialogHeader>
+                      <DialogTitle>Manage Project: {project.title}</DialogTitle>
+                    </DialogHeader>
+                    <div className="mt-4">
+                      <ProjectMembersList projectId={project.id} isOwner={isOwner} />
+                    </div>
+                  </DialogContent>
+                </Dialog>
               )}
             </div>
           </div>

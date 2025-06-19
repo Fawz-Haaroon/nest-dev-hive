@@ -25,6 +25,8 @@ export const useProjectMembers = (projectId?: string) => {
     queryFn: async () => {
       if (!projectId) return [];
 
+      console.log('Fetching members for project:', projectId);
+
       const { data, error } = await supabase
         .from('project_members')
         .select(`
@@ -44,10 +46,17 @@ export const useProjectMembers = (projectId?: string) => {
         .eq('project_id', projectId)
         .order('joined_at', { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching project members:', error);
+        throw error;
+      }
+      
+      console.log('Fetched members:', data);
       return data as ProjectMember[];
     },
     enabled: !!projectId,
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
   });
 };
 
@@ -57,23 +66,31 @@ export const useRemoveProjectMember = () => {
 
   return useMutation({
     mutationFn: async ({ memberId, reason }: { memberId: string; reason?: string }) => {
+      console.log('Removing member:', memberId);
+      
       const { error } = await supabase
         .from('project_members')
         .delete()
         .eq('id', memberId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error removing member:', error);
+        throw error;
+      }
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
+      // Invalidate all related queries to refresh data
       queryClient.invalidateQueries({ queryKey: ['project-members'] });
       queryClient.invalidateQueries({ queryKey: ['projects'] });
       queryClient.invalidateQueries({ queryKey: ['user-projects'] });
+      
       toast({
         title: 'Member Removed',
         description: 'Team member has been removed from the project.',
       });
     },
     onError: (error) => {
+      console.error('Remove member error:', error);
       toast({
         title: 'Error',
         description: error.message,
@@ -89,6 +106,8 @@ export const useLeaveProjectRequest = () => {
 
   return useMutation({
     mutationFn: async ({ projectId, message }: { projectId: string; message?: string }) => {
+      console.log('Sending leave request for project:', projectId);
+      
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
@@ -112,7 +131,10 @@ export const useLeaveProjectRequest = () => {
           related_user_id: user.id
         }]);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error creating leave request notification:', error);
+        throw error;
+      }
     },
     onSuccess: () => {
       toast({
@@ -121,6 +143,7 @@ export const useLeaveProjectRequest = () => {
       });
     },
     onError: (error) => {
+      console.error('Leave request error:', error);
       toast({
         title: 'Error',
         description: error.message,
