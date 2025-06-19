@@ -17,6 +17,7 @@ import UserProfile from "./pages/UserProfile";
 import MyProjects from "./pages/MyProjects";
 import Settings from "./pages/Settings";
 import Explore from "./pages/Explore";
+import ProjectDetails from "./pages/ProjectDetails";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -39,6 +40,7 @@ const App = () => (
               <Route path="/profile" element={<Profile />} />
               <Route path="/profile/:userId" element={<UserProfile />} />
               <Route path="/my-projects" element={<MyProjects />} />
+              <Route path="/project/:projectId" element={<ProjectDetails />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="/explore" element={<Explore />} />
               <Route path="*" element={<NotFound />} />

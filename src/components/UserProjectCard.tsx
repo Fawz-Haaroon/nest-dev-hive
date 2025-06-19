@@ -34,7 +34,11 @@ export const UserProjectCard = ({ project }: UserProjectCardProps) => {
   };
 
   const handleViewProject = () => {
-    navigate('/explore'); // Navigate to explore and let them find the project
+    navigate(`/project/${project.id}`);
+  };
+
+  const handleManageProject = () => {
+    navigate(`/project/${project.id}/manage`);
   };
 
   return (
@@ -71,7 +75,7 @@ export const UserProjectCard = ({ project }: UserProjectCardProps) => {
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="flex-1 min-w-0">
-            <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-2">
+            <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-2 cursor-pointer" onClick={handleViewProject}>
               {project.title}
             </h3>
             <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-2 leading-relaxed">
@@ -157,11 +161,12 @@ export const UserProjectCard = ({ project }: UserProjectCardProps) => {
               variant="outline"
             >
               <Eye className="w-4 h-4 mr-1" />
-              View Project
+              View
             </Button>
             {project.role === 'owner' && (
               <Button 
                 size="sm" 
+                onClick={handleManageProject}
                 className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
               >
                 <Settings className="w-4 h-4 mr-1" />
