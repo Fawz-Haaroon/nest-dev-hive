@@ -1,5 +1,4 @@
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -29,7 +28,19 @@ export const ProjectMembersList = ({ projectId, isOwner, showAsDialog = false }:
   const [leaveMessage, setLeaveMessage] = useState('');
   const [showLeaveDialog, setShowLeaveDialog] = useState(false);
 
+  // Force refresh every few seconds to keep data fresh
+  useEffect(() => {
+    const interval = setInterval(() => {
+      console.log('ProjectMembersList: Force refreshing members...');
+      refetch();
+    }, 3000);
+    
+    return () => clearInterval(interval);
+  }, [refetch]);
+
+  console.log('ProjectMembersList - Project ID:', projectId);
   console.log('ProjectMembersList - Current members:', members);
+  console.log('ProjectMembersList - Member count:', members?.length);
   console.log('ProjectMembersList - User ID:', user?.id);
   console.log('ProjectMembersList - Is Owner:', isOwner);
 
@@ -87,65 +98,71 @@ export const ProjectMembersList = ({ projectId, isOwner, showAsDialog = false }:
   const content = (
     <>
       <div className="space-y-4">
-        {members?.map((member) => (
-          <div key={member.id} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
-            <div className="flex items-center gap-3">
-              <Avatar className="w-10 h-10">
-                <AvatarImage src={member.user.avatar_url || ''} />
-                <AvatarFallback>
-                  {member.user.username?.charAt(0).toUpperCase() || 'U'}
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <button
-                  onClick={() => handleViewProfile(member.user_id)}
-                  className="font-medium text-blue-600 dark:text-blue-400 hover:underline"
-                >
-                  {member.user.full_name || member.user.username}
-                </button>
-                <p className="text-sm text-slate-600 dark:text-slate-400">
-                  @{member.user.username}
-                </p>
-              </div>
-              {member.role === 'owner' && (
-                <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400">
-                  <Crown className="w-3 h-3 mr-1" />
-                  Owner
-                </Badge>
-              )}
-            </div>
-            
-            <div className="flex items-center gap-2">
-              {isCurrentUserOwner && member.role !== 'owner' && (
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-red-600 hover:text-red-700"
-                    >
-                      <UserMinus className="w-4 h-4" />
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Remove Team Member</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Are you sure you want to remove {member.user.full_name || member.user.username} from this project? This action cannot be undone.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={() => handleRemoveMember(member.id)}>
-                        Remove Member
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              )}
-            </div>
+        {members?.length === 0 ? (
+          <div className="text-center py-8">
+            <p className="text-slate-500 dark:text-slate-400">No members found</p>
           </div>
-        ))}
+        ) : (
+          members?.map((member) => (
+            <div key={member.id} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
+              <div className="flex items-center gap-3">
+                <Avatar className="w-10 h-10">
+                  <AvatarImage src={member.user.avatar_url || ''} />
+                  <AvatarFallback>
+                    {member.user.username?.charAt(0).toUpperCase() || 'U'}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <button
+                    onClick={() => handleViewProfile(member.user_id)}
+                    className="font-medium text-blue-600 dark:text-blue-400 hover:underline"
+                  >
+                    {member.user.full_name || member.user.username}
+                  </button>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">
+                    @{member.user.username}
+                  </p>
+                </div>
+                {member.role === 'owner' && (
+                  <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400">
+                    <Crown className="w-3 h-3 mr-1" />
+                    Owner
+                  </Badge>
+                )}
+              </div>
+              
+              <div className="flex items-center gap-2">
+                {isCurrentUserOwner && member.role !== 'owner' && (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-red-600 hover:text-red-700"
+                      >
+                        <UserMinus className="w-4 h-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Remove Team Member</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Are you sure you want to remove {member.user.full_name || member.user.username} from this project? This action cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => handleRemoveMember(member.id)}>
+                          Remove Member
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
+              </div>
+            </div>
+          ))
+        )}
 
         {isCurrentUserMember && (
           <div className="pt-4 border-t border-slate-200 dark:border-slate-700">

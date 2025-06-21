@@ -50,13 +50,17 @@ export const useProjectMembers = (projectId?: string) => {
         throw error;
       }
       
-      console.log('Fetched members:', data);
-      return data as ProjectMember[];
+      console.log('Raw fetched members data:', data);
+      const members = data as ProjectMember[];
+      console.log('Processed members:', members);
+      console.log('Member count:', members?.length);
+      return members;
     },
     enabled: !!projectId,
     refetchOnWindowFocus: true,
     refetchOnMount: true,
-    refetchInterval: 30000, // Refetch every 30 seconds to keep data fresh
+    refetchInterval: 10000, // Refetch every 10 seconds to ensure fresh data
+    staleTime: 0, // Always consider data stale
   });
 };
 

@@ -1,3 +1,4 @@
+
 import { useParams, useNavigate } from 'react-router-dom';
 import { Navbar } from '@/components/Navbar';
 import { Button } from '@/components/ui/button';
@@ -15,7 +16,7 @@ import { ProjectMembersList } from '@/components/ProjectMembersList';
 import { useAuth } from '@/contexts/AuthContext';
 import { FavoriteButton } from '@/components/FavoriteButton';
 import { useProjectMembers, useLeaveProjectRequest } from '@/hooks/useProjectMembers';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 const ProjectDetails = () => {
   const { projectId } = useParams();
@@ -30,6 +31,18 @@ const ProjectDetails = () => {
   
   const project = projects?.find(p => p.id === projectId);
   
+  // Force refresh members data every 5 seconds when on this page
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (projectId) {
+        console.log('Force refreshing members...');
+        refetchMembers();
+      }
+    }, 5000);
+    
+    return () => clearInterval(interval);
+  }, [projectId, refetchMembers]);
+
   if (!project) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
@@ -46,10 +59,13 @@ const ProjectDetails = () => {
 
   const isOwner = user?.id === project.owner_id;
   const currentUserMember = members?.find(m => m.user_id === user?.id);
-  const isCurrentUserMember = !!currentUserMember && currentUserMember.role !== 'owner';
+  const isCurrentUserMember = !!currentUserMember && !isOwner;
   const canPostUpdates = isOwner;
 
+  console.log('ProjectDetails - User ID:', user?.id);
+  console.log('ProjectDetails - Project Owner ID:', project.owner_id);
   console.log('ProjectDetails - Is Owner:', isOwner);
+  console.log('ProjectDetails - Members:', members);
   console.log('ProjectDetails - Current User Member:', currentUserMember);
   console.log('ProjectDetails - Is Current User Member:', isCurrentUserMember);
 
@@ -88,7 +104,7 @@ const ProjectDetails = () => {
     }
   };
 
-  const currentMemberCount = members?.length || 1;
+  const currentMemberCount = members?.length || 0;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
