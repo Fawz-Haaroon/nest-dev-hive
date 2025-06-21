@@ -1,4 +1,3 @@
-
 import { useParams, useNavigate } from 'react-router-dom';
 import { Navbar } from '@/components/Navbar';
 import { Button } from '@/components/ui/button';
@@ -8,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft, Users, Calendar, ExternalLink, Github, Settings, LogOut, Star } from 'lucide-react';
+import { ArrowLeft, Users, Calendar, ExternalLink, Github, Settings, LogOut } from 'lucide-react';
 import { useProjects } from '@/hooks/useProjects';
 import { ProjectTimeline } from '@/components/ProjectTimeline';
 import { ProjectComments } from '@/components/ProjectComments';
@@ -16,32 +15,24 @@ import { ProjectMembersList } from '@/components/ProjectMembersList';
 import { useAuth } from '@/contexts/AuthContext';
 import { FavoriteButton } from '@/components/FavoriteButton';
 import { useProjectMembers, useLeaveProjectRequest } from '@/hooks/useProjectMembers';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 const ProjectDetails = () => {
   const { projectId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { data: projects } = useProjects();
-  const { data: members, refetch: refetchMembers } = useProjectMembers(projectId);
+  const { data: members } = useProjectMembers(projectId);
   const leaveProjectRequest = useLeaveProjectRequest();
   const [showManageDialog, setShowManageDialog] = useState(false);
   const [showLeaveDialog, setShowLeaveDialog] = useState(false);
   const [leaveMessage, setLeaveMessage] = useState('');
   
   const project = projects?.find(p => p.id === projectId);
-  
-  // Force refresh members data every 5 seconds when on this page
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (projectId) {
-        console.log('Force refreshing members...');
-        refetchMembers();
-      }
-    }, 5000);
-    
-    return () => clearInterval(interval);
-  }, [projectId, refetchMembers]);
+
+  console.log('ProjectDetails - Project:', project);
+  console.log('ProjectDetails - Members:', members);
+  console.log('ProjectDetails - User:', user?.id);
 
   if (!project) {
     return (
@@ -59,15 +50,13 @@ const ProjectDetails = () => {
 
   const isOwner = user?.id === project.owner_id;
   const currentUserMember = members?.find(m => m.user_id === user?.id);
-  const isCurrentUserMember = !!currentUserMember && !isOwner;
-  const canPostUpdates = isOwner;
+  const isCurrentUserMemberNotOwner = !!currentUserMember && currentUserMember.role !== 'owner';
+  const memberCount = members?.length || 0;
 
-  console.log('ProjectDetails - User ID:', user?.id);
-  console.log('ProjectDetails - Project Owner ID:', project.owner_id);
-  console.log('ProjectDetails - Is Owner:', isOwner);
-  console.log('ProjectDetails - Members:', members);
-  console.log('ProjectDetails - Current User Member:', currentUserMember);
-  console.log('ProjectDetails - Is Current User Member:', isCurrentUserMember);
+  console.log('Is owner:', isOwner);
+  console.log('Current user member:', currentUserMember);
+  console.log('Is member (not owner):', isCurrentUserMemberNotOwner);
+  console.log('Member count:', memberCount);
 
   const handleLeaveRequest = async () => {
     if (!projectId) return;
@@ -104,8 +93,6 @@ const ProjectDetails = () => {
     }
   };
 
-  const currentMemberCount = members?.length || 0;
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
       <Navbar />
@@ -125,7 +112,6 @@ const ProjectDetails = () => {
             <div className="flex items-center gap-2 ml-auto">
               <FavoriteButton projectId={project.id} />
               
-              {/* Show Manage button for owners */}
               {isOwner && (
                 <Dialog open={showManageDialog} onOpenChange={setShowManageDialog}>
                   <DialogTrigger asChild>
@@ -145,8 +131,7 @@ const ProjectDetails = () => {
                 </Dialog>
               )}
 
-              {/* Show Exit button for members */}
-              {isCurrentUserMember && (
+              {isCurrentUserMemberNotOwner && (
                 <Dialog open={showLeaveDialog} onOpenChange={setShowLeaveDialog}>
                   <DialogTrigger asChild>
                     <Button size="sm" variant="outline" className="text-red-600 hover:text-red-700">
@@ -231,7 +216,7 @@ const ProjectDetails = () => {
                   <TabsTrigger value="members">Members</TabsTrigger>
                 </TabsList>
                 <TabsContent value="timeline" className="space-y-6">
-                  <ProjectTimeline projectId={project.id} canPost={canPostUpdates} />
+                  <ProjectTimeline projectId={project.id} canPost={isOwner} />
                 </TabsContent>
                 <TabsContent value="comments" className="space-y-6">
                   <ProjectComments projectId={project.id} />
@@ -258,7 +243,7 @@ const ProjectDetails = () => {
                   
                   <div>
                     <h4 className="font-semibold text-sm text-slate-600 dark:text-slate-400 mb-2">Team Size</h4>
-                    <p className="text-slate-900 dark:text-slate-100">{currentMemberCount} / {project.max_members} members</p>
+                    <p className="text-slate-900 dark:text-slate-100">{memberCount} / {project.max_members} members</p>
                   </div>
 
                   <div>

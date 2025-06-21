@@ -50,17 +50,14 @@ export const useProjectMembers = (projectId?: string) => {
         throw error;
       }
       
-      console.log('Raw fetched members data:', data);
-      const members = data as ProjectMember[];
-      console.log('Processed members:', members);
-      console.log('Member count:', members?.length);
-      return members;
+      console.log('Fetched members data:', data);
+      return data as ProjectMember[];
     },
     enabled: !!projectId,
+    staleTime: 0,
+    refetchInterval: 5000,
     refetchOnWindowFocus: true,
     refetchOnMount: true,
-    refetchInterval: 10000, // Refetch every 10 seconds to ensure fresh data
-    staleTime: 0, // Always consider data stale
   });
 };
 
@@ -69,7 +66,7 @@ export const useRemoveProjectMember = () => {
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async ({ memberId, reason }: { memberId: string; reason?: string }) => {
+    mutationFn: async ({ memberId }: { memberId: string }) => {
       console.log('Removing member:', memberId);
       
       const { error } = await supabase
@@ -82,11 +79,9 @@ export const useRemoveProjectMember = () => {
         throw error;
       }
     },
-    onSuccess: (_, variables) => {
-      // Invalidate all related queries to refresh data
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['project-members'] });
       queryClient.invalidateQueries({ queryKey: ['projects'] });
-      queryClient.invalidateQueries({ queryKey: ['user-projects'] });
       
       toast({
         title: 'Member Removed',
@@ -97,7 +92,7 @@ export const useRemoveProjectMember = () => {
       console.error('Remove member error:', error);
       toast({
         title: 'Error',
-        description: error.message,
+        description: 'Failed to remove member',
         variant: 'destructive',
       });
     },
@@ -115,7 +110,6 @@ export const useLeaveProjectRequest = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
-      // Create a notification for the project owner
       const { data: project } = await supabase
         .from('projects')
         .select('owner_id, title')
@@ -150,7 +144,7 @@ export const useLeaveProjectRequest = () => {
       console.error('Leave request error:', error);
       toast({
         title: 'Error',
-        description: error.message,
+        description: 'Failed to send leave request',
         variant: 'destructive',
       });
     },

@@ -5,7 +5,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { MessageSquare, Reply, Clock } from 'lucide-react';
 import { useProjectComments, useCreateComment } from '@/hooks/useProjectComments';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -19,6 +19,7 @@ export const ProjectComments = ({ projectId }: ProjectCommentsProps) => {
   const createComment = useCreateComment();
   const [newComment, setNewComment] = useState('');
   const [replyStates, setReplyStates] = useState<Record<string, { isReplying: boolean; content: string }>>({});
+  const textareaRefs = useRef<Record<string, HTMLTextAreaElement>>({});
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,16 +37,32 @@ export const ProjectComments = ({ projectId }: ProjectCommentsProps) => {
   };
 
   const handleReplyToggle = useCallback((commentId: string) => {
-    setReplyStates(prev => ({
-      ...prev,
-      [commentId]: {
-        isReplying: !prev[commentId]?.isReplying,
-        content: prev[commentId]?.content || ''
+    setReplyStates(prev => {
+      const newState = {
+        ...prev,
+        [commentId]: {
+          isReplying: !prev[commentId]?.isReplying,
+          content: prev[commentId]?.content || ''
+        }
+      };
+      
+      // Focus the textarea after state update
+      if (newState[commentId].isReplying) {
+        setTimeout(() => {
+          const textarea = textareaRefs.current[commentId];
+          if (textarea) {
+            textarea.focus();
+          }
+        }, 50);
       }
-    }));
+      
+      return newState;
+    });
   }, []);
 
-  const handleReplyContentChange = useCallback((commentId: string, content: string) => {
+  const handleRe
+
+lyContentChange = useCallback((commentId: string, content: string) => {
     setReplyStates(prev => ({
       ...prev,
       [commentId]: {
@@ -113,11 +130,15 @@ export const ProjectComments = ({ projectId }: ProjectCommentsProps) => {
             {replyState.isReplying && (
               <div className="mt-2 space-y-2">
                 <Textarea
+                  ref={(el) => {
+                    if (el) textareaRefs.current[comment.id] = el;
+                  }}
                   placeholder="Write a reply..."
                   value={replyState.content}
                   onChange={(e) => handleReplyContentChange(comment.id, e.target.value)}
                   rows={2}
                   className="text-sm"
+                  onFocus={(e) => e.target.setSelectionRange(e.target.value.length, e.target.value.length)}
                 />
                 <div className="flex gap-2">
                   <Button
