@@ -2,7 +2,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/contexts/AuthContext';
 
 export interface ProjectMember {
   id: string;
@@ -57,6 +56,7 @@ export const useProjectMembers = (projectId?: string) => {
     enabled: !!projectId,
     refetchOnWindowFocus: true,
     refetchOnMount: true,
+    refetchInterval: 30000, // Refetch every 30 seconds to keep data fresh
   });
 };
 

@@ -16,29 +16,44 @@ import { useAuth } from '@/contexts/AuthContext';
 interface ProjectMembersListProps {
   projectId: string;
   isOwner: boolean;
+  showAsDialog?: boolean;
 }
 
-export const ProjectMembersList = ({ projectId, isOwner }: ProjectMembersListProps) => {
+export const ProjectMembersList = ({ projectId, isOwner, showAsDialog = false }: ProjectMembersListProps) => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { data: members, isLoading } = useProjectMembers(projectId);
+  const { data: members, isLoading, refetch } = useProjectMembers(projectId);
   const removeProjectMember = useRemoveProjectMember();
   const leaveProjectRequest = useLeaveProjectRequest();
   
   const [leaveMessage, setLeaveMessage] = useState('');
   const [showLeaveDialog, setShowLeaveDialog] = useState(false);
 
+  console.log('ProjectMembersList - Current members:', members);
+  console.log('ProjectMembersList - User ID:', user?.id);
+  console.log('ProjectMembersList - Is Owner:', isOwner);
+
   const handleRemoveMember = async (memberId: string) => {
-    await removeProjectMember.mutateAsync({ memberId });
+    try {
+      await removeProjectMember.mutateAsync({ memberId });
+      // Manually refetch to ensure fresh data
+      await refetch();
+    } catch (error) {
+      console.error('Error removing member:', error);
+    }
   };
 
   const handleLeaveRequest = async () => {
-    await leaveProjectRequest.mutateAsync({
-      projectId,
-      message: leaveMessage
-    });
-    setShowLeaveDialog(false);
-    setLeaveMessage('');
+    try {
+      await leaveProjectRequest.mutateAsync({
+        projectId,
+        message: leaveMessage
+      });
+      setShowLeaveDialog(false);
+      setLeaveMessage('');
+    } catch (error) {
+      console.error('Error sending leave request:', error);
+    }
   };
 
   const handleViewProfile = (userId: string) => {
@@ -65,15 +80,13 @@ export const ProjectMembersList = ({ projectId, isOwner }: ProjectMembersListPro
   const isCurrentUserOwner = currentUserMember?.role === 'owner';
   const isCurrentUserMember = !!currentUserMember && currentUserMember.role !== 'owner';
 
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Users className="w-5 h-5" />
-          Team Members ({members?.length || 0})
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
+  console.log('Current user member:', currentUserMember);
+  console.log('Is current user owner:', isCurrentUserOwner);
+  console.log('Is current user member:', isCurrentUserMember);
+
+  const content = (
+    <>
+      <div className="space-y-4">
         {members?.map((member) => (
           <div key={member.id} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
             <div className="flex items-center gap-3">
@@ -175,6 +188,24 @@ export const ProjectMembersList = ({ projectId, isOwner }: ProjectMembersListPro
             </Dialog>
           </div>
         )}
+      </div>
+    </>
+  );
+
+  if (showAsDialog) {
+    return content;
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Users className="w-5 h-5" />
+          Team Members ({members?.length || 0})
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {content}
       </CardContent>
     </Card>
   );

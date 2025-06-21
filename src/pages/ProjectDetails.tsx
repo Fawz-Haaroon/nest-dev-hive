@@ -5,15 +5,16 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { ArrowLeft, Users, Calendar, ExternalLink, Github, Settings, Star } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { ArrowLeft, Users, Calendar, ExternalLink, Github, Settings, LogOut, Star } from 'lucide-react';
 import { useProjects } from '@/hooks/useProjects';
 import { ProjectTimeline } from '@/components/ProjectTimeline';
 import { ProjectComments } from '@/components/ProjectComments';
 import { ProjectMembersList } from '@/components/ProjectMembersList';
 import { useAuth } from '@/contexts/AuthContext';
-import { useFavorites } from '@/hooks/useFavorites';
 import { FavoriteButton } from '@/components/FavoriteButton';
-import { useProjectMembers } from '@/hooks/useProjectMembers';
+import { useProjectMembers, useLeaveProjectRequest } from '@/hooks/useProjectMembers';
 import { useState } from 'react';
 
 const ProjectDetails = () => {
@@ -21,8 +22,11 @@ const ProjectDetails = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { data: projects } = useProjects();
-  const { data: members } = useProjectMembers(projectId);
+  const { data: members, refetch: refetchMembers } = useProjectMembers(projectId);
+  const leaveProjectRequest = useLeaveProjectRequest();
   const [showManageDialog, setShowManageDialog] = useState(false);
+  const [showLeaveDialog, setShowLeaveDialog] = useState(false);
+  const [leaveMessage, setLeaveMessage] = useState('');
   
   const project = projects?.find(p => p.id === projectId);
   
@@ -41,7 +45,28 @@ const ProjectDetails = () => {
   }
 
   const isOwner = user?.id === project.owner_id;
-  const canPostUpdates = isOwner; // Add member check later
+  const currentUserMember = members?.find(m => m.user_id === user?.id);
+  const isCurrentUserMember = !!currentUserMember && currentUserMember.role !== 'owner';
+  const canPostUpdates = isOwner;
+
+  console.log('ProjectDetails - Is Owner:', isOwner);
+  console.log('ProjectDetails - Current User Member:', currentUserMember);
+  console.log('ProjectDetails - Is Current User Member:', isCurrentUserMember);
+
+  const handleLeaveRequest = async () => {
+    if (!projectId) return;
+    
+    try {
+      await leaveProjectRequest.mutateAsync({
+        projectId,
+        message: leaveMessage
+      });
+      setShowLeaveDialog(false);
+      setLeaveMessage('');
+    } catch (error) {
+      console.error('Error sending leave request:', error);
+    }
+  };
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
@@ -83,6 +108,8 @@ const ProjectDetails = () => {
             </h1>
             <div className="flex items-center gap-2 ml-auto">
               <FavoriteButton projectId={project.id} />
+              
+              {/* Show Manage button for owners */}
               {isOwner && (
                 <Dialog open={showManageDialog} onOpenChange={setShowManageDialog}>
                   <DialogTrigger asChild>
@@ -96,7 +123,48 @@ const ProjectDetails = () => {
                       <DialogTitle>Manage Project: {project.title}</DialogTitle>
                     </DialogHeader>
                     <div className="mt-4">
-                      <ProjectMembersList projectId={project.id} isOwner={isOwner} />
+                      <ProjectMembersList projectId={project.id} isOwner={isOwner} showAsDialog={true} />
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              )}
+
+              {/* Show Exit button for members */}
+              {isCurrentUserMember && (
+                <Dialog open={showLeaveDialog} onOpenChange={setShowLeaveDialog}>
+                  <DialogTrigger asChild>
+                    <Button size="sm" variant="outline" className="text-red-600 hover:text-red-700">
+                      <LogOut className="w-4 h-4 mr-2" />
+                      Exit
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Request to Leave Project</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <div>
+                        <Label htmlFor="leave-message">Message (optional)</Label>
+                        <Textarea
+                          id="leave-message"
+                          value={leaveMessage}
+                          onChange={(e) => setLeaveMessage(e.target.value)}
+                          placeholder="Let the project owner know why you want to leave..."
+                          rows={3}
+                        />
+                      </div>
+                      <div className="flex gap-2">
+                        <Button onClick={handleLeaveRequest} className="flex-1">
+                          Send Request
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          onClick={() => setShowLeaveDialog(false)}
+                          className="flex-1"
+                        >
+                          Cancel
+                        </Button>
+                      </div>
                     </div>
                   </DialogContent>
                 </Dialog>
