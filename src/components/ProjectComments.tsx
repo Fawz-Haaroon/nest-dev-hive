@@ -60,9 +60,7 @@ export const ProjectComments = ({ projectId }: ProjectCommentsProps) => {
     });
   }, []);
 
-  const handleRe
-
-lyContentChange = useCallback((commentId: string, content: string) => {
+  const handleReplyContentChange = useCallback((commentId: string, content: string) => {
     setReplyStates(prev => ({
       ...prev,
       [commentId]: {
@@ -138,7 +136,6 @@ lyContentChange = useCallback((commentId: string, content: string) => {
                   onChange={(e) => handleReplyContentChange(comment.id, e.target.value)}
                   rows={2}
                   className="text-sm"
-                  onFocus={(e) => e.target.setSelectionRange(e.target.value.length, e.target.value.length)}
                 />
                 <div className="flex gap-2">
                   <Button
