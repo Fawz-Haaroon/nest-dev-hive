@@ -54,8 +54,8 @@ export const useProjectMembers = (projectId?: string) => {
       return data as ProjectMember[];
     },
     enabled: !!projectId,
-    staleTime: 0,
-    refetchInterval: 5000,
+    staleTime: 0, // Always fetch fresh data
+    refetchInterval: 3000, // Refetch every 3 seconds
     refetchOnWindowFocus: true,
     refetchOnMount: true,
   });

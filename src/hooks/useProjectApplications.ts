@@ -126,24 +126,87 @@ export const useUpdateApplicationStatus = () => {
 
   return useMutation({
     mutationFn: async ({ applicationId, status }: { applicationId: string; status: 'approved' | 'rejected' }) => {
-      const { data, error } = await supabase
+      console.log('Updating application status:', { applicationId, status });
+      
+      // First, get the application details
+      const { data: application, error: fetchError } = await supabase
+        .from('project_applications')
+        .select('project_id, applicant_id')
+        .eq('id', applicationId)
+        .single();
+
+      if (fetchError) {
+        console.error('Error fetching application:', fetchError);
+        throw fetchError;
+      }
+
+      console.log('Application details:', application);
+
+      // Update the application status
+      const { data: updatedApplication, error: updateError } = await supabase
         .from('project_applications')
         .update({ status })
         .eq('id', applicationId)
         .select()
         .single();
 
-      if (error) throw error;
-      return data;
+      if (updateError) {
+        console.error('Error updating application status:', updateError);
+        throw updateError;
+      }
+
+      console.log('Updated application:', updatedApplication);
+
+      // If approved, add the user to project_members
+      if (status === 'approved' && application) {
+        console.log('Adding user to project members:', {
+          project_id: application.project_id,
+          user_id: application.applicant_id
+        });
+
+        // Check if user is already a member
+        const { data: existingMember } = await supabase
+          .from('project_members')
+          .select('id')
+          .eq('project_id', application.project_id)
+          .eq('user_id', application.applicant_id)
+          .single();
+
+        if (!existingMember) {
+          const { error: memberError } = await supabase
+            .from('project_members')
+            .insert([{
+              project_id: application.project_id,
+              user_id: application.applicant_id,
+              role: 'member'
+            }]);
+
+          if (memberError) {
+            console.error('Error adding user to project members:', memberError);
+            throw memberError;
+          }
+
+          console.log('Successfully added user to project members');
+        } else {
+          console.log('User is already a member of this project');
+        }
+      }
+
+      return updatedApplication;
     },
     onSuccess: (data, variables) => {
+      // Invalidate all relevant queries to refresh data
       queryClient.invalidateQueries({ queryKey: ['project-applications'] });
+      queryClient.invalidateQueries({ queryKey: ['project-members'] });
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      
       toast({
         title: 'Application Updated',
         description: `Application ${variables.status === 'approved' ? 'approved' : 'rejected'} successfully.`,
       });
     },
     onError: (error) => {
+      console.error('Update application status error:', error);
       toast({
         title: 'Error',
         description: error.message,
